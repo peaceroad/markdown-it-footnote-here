@@ -1,6 +1,6 @@
 {
-  "name": "markdown-it-footnote",
-  "version": "3.0.2",
+  "name": "markdown-it-footnote-here",
+  "version": "1.0.0",
   "description": "Footnotes for markdown-it markdown parser.",
   "keywords": [
     "markdown-it-plugin",
@@ -8,10 +8,10 @@
     "markdown",
     "footnotes"
   ],
-  "repository": "markdown-it/markdown-it-footnote",
+  "repository": "uyumyuuy/markdown-it-footnote-here",
   "license": "MIT",
   "scripts": {
-    "test": "make test"
+    "test": "./node_modules/.bin/mocha -R spec"
   },
   "devDependencies": {
     "browserify": "^16.2.3",

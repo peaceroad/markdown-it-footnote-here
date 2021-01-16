@@ -1,8 +1,4 @@
-# markdown-it-footnote
-
-[![Build Status](https://img.shields.io/travis/markdown-it/markdown-it-footnote/master.svg?style=flat)](https://travis-ci.org/markdown-it/markdown-it-footnote)
-[![NPM version](https://img.shields.io/npm/v/markdown-it-footnote.svg?style=flat)](https://www.npmjs.org/package/markdown-it-footnote)
-[![Coverage Status](https://img.shields.io/coveralls/markdown-it/markdown-it-footnote/master.svg?style=flat)](https://coveralls.io/r/markdown-it/markdown-it-footnote?branch=master)
+# markdown-it-footnote-here
 
 > Footnotes plugin for [markdown-it](https://github.com/markdown-it/markdown-it) markdown parser.
 
@@ -27,42 +23,40 @@ html:
 
 ```html
 <p>Here is a footnote reference,<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup> and another.<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
-<p>This paragraph won’t be part of the note, because it
-isn’t indented.</p>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1"  class="footnote-item"><p>Here is the footnote. <a href="#fnref1" class="footnote-backref">↩</a></p>
-</li>
-<li id="fn2"  class="footnote-item"><p>Here’s one with multiple blocks.</p>
+<div id="fn1" class="footnote-item"><span class="footnote-id">1:</span><p>Here is the footnote.</p>
+</div>
+<div id="fn2" class="footnote-item"><span class="footnote-id">2:</span><p>Here's one with multiple blocks.</p>
 <p>Subsequent paragraphs are indented to show that they
-belong to the previous footnote. <a href="#fnref2" class="footnote-backref">↩</a></p>
-</li>
-</ol>
-</section>
+belong to the previous footnote.</p>
+<pre><code>{ some.code }
+</code></pre>
+<p>The whole paragraph can be indented, or just the first
+divne.  In this way, multi-paragraph footnotes work divke
+multi-paragraph divst items.</p>
+</div>
+<p>This paragraph won't be part of the note, because it
+isn't indented.</p>
 ```
 
-__Inline footnote__:
+__Each footnote keep their positions__:
 
 ```
-Here is an inline note.^[Inlines notes are easier to write, since
-you don't have to pick an identifier and move down to type the
-note.]
-```
+Here is footnote-here reference.[^1].
 
-html:
+[^1]: Here is the footnote.
+
+Next footnote is here.[^2]
+
+[^2]: Here is next footnote.
+```
 
 ```html
-<p>Here is an inline note.<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
-<hr class="footnotes-sep">
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1"  class="footnote-item"><p>Inlines notes are easier to write, since
-you don’t have to pick an identifier and move down to type the
-note. <a href="#fnref1" class="footnote-backref">↩</a></p>
-</li>
-</ol>
-</section>
+<p>Here is footnote-here reference.<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>.</p>
+<div id="fn1" class="footnote-item"><span class="footnote-id">1:</span><p>Here is the footnote.</p>
+</div>
+<p>Next footnote is here.<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+<div id="fn2" class="footnote-item"><span class="footnote-id">2:</span><p>Here is next footnote.</p>
+</div>
 ```
 
 
@@ -71,15 +65,15 @@ note. <a href="#fnref1" class="footnote-backref">↩</a></p>
 node.js, browser:
 
 ```bash
-npm install markdown-it-footnote --save
-bower install markdown-it-footnote --save
+npm install markdown-it-footnote-here --save
+bower install markdown-it-footnote-here --save
 ```
 
 ## Use
 
 ```js
 var md = require('markdown-it')()
-            .use(require('markdown-it-footnote'));
+            .use(require('markdown-it-footnote-here'));
 
 md.render(/*...*/) // See examples above
 ```
@@ -96,20 +90,6 @@ look in [`index.js`](index.js). The API of these template functions is out of
 scope for this plugin's documentation; you can read more about it [in the
 markdown-it
 documentation](https://github.com/markdown-it/markdown-it/blob/master/docs/architecture.md#renderer).
-
-To demonstrate with an example, here is how you might replace the `<hr>` that
-this plugin emits by default with an `<h4>` emitted by your own template
-function override:
-
-```js
-const md = require('markdown-it')().use(require('markdown-it-footnote'));
-
-md.renderer.rules.footnote_block_open = () => (
-  '<h4 class="mt-3">Footnotes</h4>\n' +
-  '<section class="footnotes">\n' +
-  '<ol class="footnotes-list">\n'
-);
-```
 
 
 ## License
