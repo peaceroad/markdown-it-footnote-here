@@ -43,4 +43,4 @@ npm install @peaceroad/markdown-it-footnote-here
 
 ## License
 
-[MIT](https://github.com/markdown-it/markdown-it-footnote/blob/master/LICENSE)
+[MIT](./LICENSE)
