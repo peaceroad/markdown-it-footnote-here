@@ -19,7 +19,7 @@ A paragraph.
 HTML:
 
 ```html
-<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-ref" role="doc-noteref">[1]</a></p>
+<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a></p>
 <aside id="fn1" class="fn" role="doc-footnote">
 <p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
 </aside>

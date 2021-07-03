@@ -27,7 +27,7 @@ function render_footnote_ref(tokens, idx, options, env, slf) {
   var caption = slf.rules.footnote_caption(tokens, idx, options, env, slf);
   var refid   = id;
 
-  return '<a href="#fn' + id + '" id="fn-ref' + refid + '" class="fn-ref" role="doc-noteref">' + caption + '</a>';
+  return '<a href="#fn' + id + '" id="fn-ref' + refid + '" class="fn-noteref" role="doc-noteref">' + caption + '</a>';
 }
 
 function render_footnote_open(tokens, idx, options, env, slf) {
