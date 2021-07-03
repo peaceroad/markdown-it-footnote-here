@@ -16,7 +16,7 @@ function render_footnote_anchor_name(tokens, idx, options, env/*, slf*/) {
   return prefix + n;
 }
 
-function render_footnote_caption(tokens, idx/*, options, env, slf*/) {
+function render_footnote_caption(tokens, idx) {
   var n = Number(tokens[idx].meta.id + 1).toString();
 
   return '[' + n + ']';
@@ -27,38 +27,36 @@ function render_footnote_ref(tokens, idx, options, env, slf) {
   var caption = slf.rules.footnote_caption(tokens, idx, options, env, slf);
   var refid   = id;
 
-  return '<sup class="footnote-ref"><a href="#fn' + id + '" id="fnref' + refid + '">' + caption + '</a></sup>';
-}
-
-function render_footnote_block_open(tokens, idx, options) {
-  return '<section class="footnotes">\n' +
-         '<ol class="footnotes-list">\n';
-}
-
-function render_footnote_block_close() {
-  return '</ol>\n</section>\n';
+  return '<a href="#fn' + id + '" id="fn-ref' + refid + '" class="fn-ref" role="doc-noteref">' + caption + '</a>';
 }
 
 function render_footnote_open(tokens, idx, options, env, slf) {
   var id = slf.rules.footnote_anchor_name(tokens, idx, options, env, slf);
 
-  return '<div id="fn'+id+'" class="footnote-item"><span class="footnote-id">' + id + ':</span>';
+  return '<aside id="fn' + id + '" class="fn" role="doc-footnote">\n';
 }
 
 function render_footnote_close() {
-  return '</div>\n';
+  return '</aside>\n';
+}
+
+function render_footnote_anchor(tokens, idx, options, env, slf) {
+  var id = slf.rules.footnote_anchor_name(tokens, idx, options, env, slf);
+  if (tokens[idx].meta.subId > 0) {
+    id += ':' + tokens[idx].meta.subId;
+  }
+  return '<a href="#fn-ref' + id + '" class="fn-backlink" role="doc-backlink">[' + id + ']</a> ';
 }
 
 
 module.exports = function footnote_plugin(md) {
-  var parseLinkLabel = md.helpers.parseLinkLabel,
-      isSpace = md.utils.isSpace;
+  const parseLinkLabel = md.helpers.parseLinkLabel;
+  const isSpace = md.utils.isSpace;
 
   md.renderer.rules.footnote_ref          = render_footnote_ref;
-  md.renderer.rules.footnote_block_open   = render_footnote_block_open;
-  md.renderer.rules.footnote_block_close  = render_footnote_block_close;
   md.renderer.rules.footnote_open         = render_footnote_open;
   md.renderer.rules.footnote_close        = render_footnote_close;
+  md.renderer.rules.footnote_anchor       = render_footnote_anchor;
 
   // helpers (only used in other rules, no tokens are attached to those)
   md.renderer.rules.footnote_caption      = render_footnote_caption;
@@ -108,6 +106,13 @@ module.exports = function footnote_plugin(md) {
 
     posAfterColon = pos;
     initial = offset = state.sCount[startLine] + pos - (state.bMarks[startLine] + state.tShift[startLine]);
+
+    /*
+    token =  new state.Token('footnote_anchor', '', 0);
+    token.meta = { id: id, label: label };
+    state.tokens.push(token);
+    */
+
 
     while (pos < max) {
       ch = state.src.charCodeAt(pos);
@@ -184,8 +189,13 @@ module.exports = function footnote_plugin(md) {
     if (typeof state.env.footnotes.refs[':' + label] === 'undefined') { return false; }
 
     if (!silent) {
+      if (!state.env.footnotes.list) { state.env.footnotes.list = []; }
 
-      id = state.env.footnotes.refs[':' + label]
+
+      let footnoteId = state.env.footnotes.list.length;
+      state.env.footnotes.list[footnoteId] = { label: label, count: 0 };
+
+      id = state.env.footnotes.refs[':' + label];
 
       token      = state.push('footnote_ref', '', 0);
       token.meta = { id: id, label: label };
@@ -196,89 +206,43 @@ module.exports = function footnote_plugin(md) {
     return true;
   }
 
-  // Glue footnote tokens to end of token stream
-  function footnote_tail(state) {
-    var i, l, j, t, lastParagraph, list, token, tokens, current, currentLabel,
-        insideRef = false,
-        refTokens = {};
-
-    if (!state.env.footnotes) { return; }
-
-    state.tokens = state.tokens.filter(function (tok) {
-      if (tok.type === 'footnote_reference_open') {
-        insideRef = true;
-        current = [];
-        currentLabel = tok.meta.label;
-        return false;
+  function addClass(token, className) {
+    token.attrs = token.attrs || [];
+    const ats = token.attrs.map(x => x[0]);
+    const i = ats.indexOf('class');
+    if (i === -1) {
+      token.attrs.push(['class', className]);
+    } else {
+      let classVal = token.attrs[i][1] || '';
+      const classNames = classStr.split(' ');
+      if (classNames.indexOf(className) === -1) {
+        classVal += ' ' + className;
+        token.attrs[i][1] = classVal;
       }
-      if (tok.type === 'footnote_reference_close') {
-        insideRef = false;
-        // prepend ':' to avoid conflict with Object.prototype members
-        refTokens[':' + currentLabel] = current;
-        return false;
-      }
-      if (insideRef) { current.push(tok); }
-      return !insideRef;
-    });
-
-    if (!state.env.footnotes.list) { return; }
-    list = state.env.footnotes.list;
-
-    token = new state.Token('footnote_block_open', '', 1);
-    state.tokens.push(token);
-
-    for (i = 0, l = list.length; i < l; i++) {
-      token      = new state.Token('footnote_open', '', 1);
-      token.meta = { id: i, label: list[i].label };
-      state.tokens.push(token);
-
-      if (list[i].tokens) {
-        tokens = [];
-
-        token          = new state.Token('paragraph_open', 'p', 1);
-        token.block    = true;
-        tokens.push(token);
-
-        token          = new state.Token('inline', '', 0);
-        token.children = list[i].tokens;
-        token.content  = list[i].content;
-        tokens.push(token);
-
-        token          = new state.Token('paragraph_close', 'p', -1);
-        token.block    = true;
-        tokens.push(token);
-
-      } else if (list[i].label) {
-        tokens = refTokens[':' + list[i].label];
-      }
-
-      state.tokens = state.tokens.concat(tokens);
-      if (state.tokens[state.tokens.length - 1].type === 'paragraph_close') {
-        lastParagraph = state.tokens.pop();
-      } else {
-        lastParagraph = null;
-      }
-
-      t = list[i].count > 0 ? list[i].count : 1;
-      for (j = 0; j < t; j++) {
-        token      = new state.Token('footnote_anchor', '', 0);
-        token.meta = { id: i, subId: j, label: list[i].label };
-        state.tokens.push(token);
-      }
-
-      if (lastParagraph) {
-        state.tokens.push(lastParagraph);
-      }
-
-      token = new state.Token('footnote_close', '', -1);
-      state.tokens.push(token);
     }
+  }
 
-    token = new state.Token('footnote_block_close', '', -1);
-    state.tokens.push(token);
+  function footnote_anchor (state) {
+    let n = 0;
+    let id = 0;
+    while (n < state.tokens.length - 2) {
+      const token = state.tokens[n];
+      const isFootnoteStartTag = token.type === 'footnote_open';
+      if(!isFootnoteStartTag) {
+        n++;
+        continue;
+      }
+      if(state.tokens[n + 1].type === 'paragraph_open'
+        && state.tokens[n + 2].type === 'inline') {
+          const aToken =  new state.Token('footnote_anchor', '', 0);
+          aToken.meta = { id: id++, label: id };
+          state.tokens[n + 2].children.unshift(aToken);
+      }
+      n++;
+    }
   }
 
   md.block.ruler.before('reference', 'footnote_def', footnote_def, { alt: [ 'paragraph', 'reference' ] });
   md.inline.ruler.after('image', 'footnote_ref', footnote_ref);
-  //md.core.ruler.after('inline', 'footnote_tail', footnote_tail);
+  md.core.ruler.after('inline', 'footnote_anchor', footnote_anchor);
 };

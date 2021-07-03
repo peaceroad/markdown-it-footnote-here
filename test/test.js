@@ -1,46 +1,28 @@
-'use strict';
+const assert = require('assert');
+const md = require('markdown-it')();
+const footnotes = require('../index.js');
+md.use(footnotes);
 
+const ms = [
+  [
+    'A paragraph.[^1]\n\n[^1]: A footnote.\n\nA paragraph.',
+    '<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-ref" role="doc-noteref">[1]</a></p>\n<aside id="fn1" class="fn" role="doc-footnote">\n<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>\n</aside>\n<p>A paragraph.</p>\n'
+  ],
+  [
+    'A paragraph.[^1]\n\n[^1]: A footnote.\n\n    A footnote.\n\nA paragraph.',
+    '<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-ref" role="doc-noteref">[1]</a></p>\n<aside id="fn1" class="fn" role="doc-footnote">\n<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>\n<p>A footnote.</p>\n</aside>\n<p>A paragraph.</p>\n'
+  ]
+];
 
-var assert   = require('assert');
-var testgen  = require('markdown-it-testgen');
-var path     = require('path');
-
-/*eslint-env mocha*/
-
-// Most of the rest of this is inlined from generate(), but modified
-// so we can pass in an `env` object
-function generate(fixturePath, md, env) {
-  testgen.load(fixturePath, {}, function (data) {
-    data.meta = data.meta || {};
-
-    var desc = data.meta.desc || path.relative(fixturePath, data.file);
-
-    (data.meta.skip ? describe.skip : describe)(desc, function () {
-      data.fixtures.forEach(function (fixture) {
-        it('line ' + (fixture.first.range[0] - 1), function () {
-          // add variant character after "↩", so we don't have to worry about
-          // invisible characters in tests
-          assert.strictEqual(
-            md.render(fixture.first.text, Object.assign({}, env || {})),
-            fixture.second.text.replace(/\u21a9(?!\ufe0e)/g, '\u21a9\ufe0e')
-          );
-        });
-      });
-    });
-  });
+let n = 0;
+while(n < ms.length) {
+  const h = md.render(ms[n][0]);
+  try {
+    assert.strictEqual(h, ms[n][1]);
+  } catch(e) {
+    console.log('Incorrect: ')
+    console.log('M: ' + ms[n][0] + '\nH: ' + h +'C: ' + ms[n][1]);
+  };
+  n++;
 }
 
-
-describe('footnote.txt', function () {
-  var md = require('markdown-it')({ linkify: true }).use(require('../'));
-
-  // Check that defaults work correctly
-  generate(path.join(__dirname, 'fixtures/footnote.txt'), md);
-});
-
-describe('custom docId in env', function () {
-  var md = require('markdown-it')().use(require('../'));
-
-  // Now check that using `env.documentId` works to prefix IDs
-  generate(path.join(__dirname, 'fixtures/footnote-prefixed.txt'), md, { docId: 'test-doc-id' });
-});

@@ -1,26 +1,17 @@
 {
-  "name": "markdown-it-footnote-here",
-  "version": "1.0.0",
-  "description": "Footnotes for markdown-it markdown parser.",
-  "keywords": [
-    "markdown-it-plugin",
-    "markdown-it",
-    "markdown",
-    "footnotes"
-  ],
-  "repository": "uyumyuuy/markdown-it-footnote-here",
+  "name": "@peaceroad/markdown-it-footnote-here",
+  "version": "0.1.0",
+  "description": "A markdown-it plugin. This generate aside[role|doc-footnote] element just below the footnote reference paragraph.",
+  "author": "peaceroad <peaceroad@gmail.com>",
+  "repository": "https://github.com/peaceroad/markdown-it-footnote-here.git",
+  "bugs": {
+    "url": "https://github.com/peaceroad/markdown-it-footnote-here/issues"
+  },
   "license": "MIT",
   "scripts": {
-    "test": "./node_modules/.bin/mocha -R spec"
+    "test": "node test/test.js"
   },
   "devDependencies": {
-    "browserify": "^16.2.3",
-    "coveralls": "^3.0.2",
-    "eslint": "^5.9.0",
-    "istanbul": "^0.4.5",
-    "markdown-it": "markdown-it/markdown-it",
-    "markdown-it-testgen": "~0.1.0",
-    "mocha": "^5.2.0",
-    "terser": "^3.17.0"
+    "markdown-it": "^12.0.6"
   }
 }
