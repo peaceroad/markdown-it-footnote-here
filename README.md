@@ -1,6 +1,6 @@
 # markdown-it-footnote-here
 
-This is [markdown-it](https://github.com/markdown-it/markdown-it) plugin.
+This is [markdown-it](https://github.com/markdown-it/markdown-it) plugin. And, this plugin is a further fork of [markdown-it-footnote-here](https://github.com/uyumyuuy/markdown-it-footnote-here), which is a fork of the original [markdown-it-footnote](https://github.com/markdown-it/markdown-it-footnote) plugin.
 
 This plugin inserts footnotes just below paragraphs.
 
