@@ -6,25 +6,31 @@ This plugin inserts footnotes just below paragraphs.
 
 The input Markdown and the output HTML are as follows.
 
+Markdown:
 
-```
-Here is a footnote reference[^1].
+```md
+A paragraph.[^1]
 
-[^1]: Here is the footnote.
+[^1]: A footnote.
 
-[^longnote]: Here's one with multiple blocks.
-
-    Subsequent paragraphs are indented to show that they
-belong to the previous footnote.
+A paragraph.
 ```
 
+HTML:
+
+```html
+<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-ref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+</aside>
+<p>A paragraph.</p>
 ```
 
 ## Use
 
 ```js
-var md = require('markdown-it')()
-            .use(require('markdown-it-footnote-here'));
+const md = require('markdown-it')()
+            .use(require('@peaceroad/markdown-it-footnote-here'));
 
 md.render(/*...*/) // See examples above
 ```
