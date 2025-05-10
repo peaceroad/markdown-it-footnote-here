@@ -1,0 +1,73 @@
+[Markdown]
+A paragraph.[^1]
+
+[^1]: A footnote.
+
+A paragraph.
+[HTML]
+<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+</aside>
+<p>A paragraph.</p>
+
+
+[Markdown]
+A paragraph.[^1]
+
+[^1]: A footnote.
+
+    A footnote.
+
+A paragraph.
+[HTML]
+<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+<p>A footnote.</p>
+</aside>
+<p>A paragraph.</p>
+
+
+[Markdown]
+A paragraph.[^1]
+
+[^1]: A footnote.
+
+A paragraph.[^2]
+
+[^2]: A footnote 2.
+
+A paragraph.
+[HTML]
+<p>A paragraph.<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+</aside>
+<p>A paragraph.<a href="#fn2" id="fn-ref2" class="fn-noteref" role="doc-noteref">[2]</a></p>
+<aside id="fn2" class="fn" role="doc-footnote">
+<p><a href="#fn-ref2" class="fn-backlink" role="doc-backlink">[2]</a> A footnote 2.</p>
+</aside>
+<p>A paragraph.</p>
+
+
+[Markdown]
+A paragraph.[^1]
+
+[^1]: A footnote.
+
+A paragraph.[^2]
+
+[^2]: A footnote 2.
+
+A paragraph.[^1]
+[HTML]
+<p>A paragraph.<a href="#fn1" id="fn-ref1-a" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1-a" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+</aside>
+<p>A paragraph.<a href="#fn2" id="fn-ref2" class="fn-noteref" role="doc-noteref">[2]</a></p>
+<aside id="fn2" class="fn" role="doc-footnote">
+<p><a href="#fn-ref2" class="fn-backlink" role="doc-backlink">[2]</a> A footnote 2.</p>
+</aside>
+<p>A paragraph.<a href="#fn1" id="fn-ref1-b" class="fn-noteref" role="doc-noteref">[1]</a></p>

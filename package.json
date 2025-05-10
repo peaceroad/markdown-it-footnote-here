@@ -2,6 +2,7 @@
   "name": "@peaceroad/markdown-it-footnote-here",
   "version": "0.1.0",
   "description": "A markdown-it plugin. This generate aside[role|doc-footnote] element just below the footnote reference paragraph.",
+  "type":"module",
   "author": "peaceroad <peaceroad@gmail.com>",
   "repository": "https://github.com/peaceroad/markdown-it-footnote-here.git",
   "bugs": {

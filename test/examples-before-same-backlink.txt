@@ -1,0 +1,18 @@
+[Markdown]
+paragraph [^1]
+
+paragraph [^1][^2]
+
+[^1]: footnote.
+[^2]: footnote 2.
+
+[HTML]
+<p>paragraph <a href="#fn1" id="fn-ref1-a" class="fn-noteref" role="doc-noteref">[1-a]</a></p>
+<p>paragraph <a href="#fn1" id="fn-ref1-b" class="fn-noteref" role="doc-noteref">[1-b]</a><a href="#fn2" id="fn-ref2" class="fn-noteref" role="doc-noteref">[2]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1-a" class="fn-backlink" role="doc-backlink">[1-a]</a><a href="#fn-ref1-b" class="fn-backlink" role="doc-backlink">[1-b]</a> footnote.</p>
+</aside>
+<aside id="fn2" class="fn" role="doc-footnote">
+<p><a href="#fn-ref2" class="fn-backlink" role="doc-backlink">[2]</a> footnote 2.</p>
+</aside>
+
