@@ -1,0 +1,42 @@
+[Markdown]
+Paragraph A footnote[^1] endnote[^en-1].
+
+Paragraph B footnote[^2] endnote[^en-2].
+
+Paragraph C footnote[^3] endnote[^en-3].
+
+[^1]: Footnote one.
+[^2]: Footnote two.
+[^3]: Footnote three.
+[^en-1]: Endnote one.
+[^en-2]: Endnote two.
+[^en-3]: Endnote three first paragraph.
+
+    Endnote three second paragraph.
+[HTML]
+<p>Paragraph A footnote<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a> endnote<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a>.</p>
+<p>Paragraph B footnote<a href="#fn2" id="fn-ref2" class="fn-noteref" role="doc-noteref">[2]</a> endnote<a href="#en2" id="en-ref2" class="en-noteref" role="doc-noteref">[E2]</a>.</p>
+<p>Paragraph C footnote<a href="#fn3" id="fn-ref3" class="fn-noteref" role="doc-noteref">[3]</a> endnote<a href="#en3" id="en-ref3" class="en-noteref" role="doc-noteref">[E3]</a>.</p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> Footnote one.</p>
+</aside>
+<aside id="fn2" class="fn" role="doc-footnote">
+<p><a href="#fn-ref2" class="fn-backlink" role="doc-backlink">[2]</a> Footnote two.</p>
+</aside>
+<aside id="fn3" class="fn" role="doc-footnote">
+<p><a href="#fn-ref3" class="fn-backlink" role="doc-backlink">[3]</a> Footnote three.</p>
+</aside>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Endnote one.</p>
+</li>
+<li id="en2">
+<p><a href="#en-ref2" class="en-backlink" role="doc-backlink">[E2]</a> Endnote two.</p>
+</li>
+<li id="en3">
+<p><a href="#en-ref3" class="en-backlink" role="doc-backlink">[E3]</a> Endnote three first paragraph.</p>
+<p>Endnote three second paragraph.</p>
+</li>
+</ol>
+</section>

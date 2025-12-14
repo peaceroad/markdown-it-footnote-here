@@ -1,0 +1,38 @@
+[Markdown]
+A paragraph.[^en-1]
+
+[^en-1]: A endnote.
+
+A paragraph.
+[HTML]
+<p>A paragraph.<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a></p>
+<p>A paragraph.</p>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> A endnote.</p>
+</li>
+</ol>
+</section>
+
+
+[Markdown]
+Paragraph with footnote[^1] and endnote[^en-2].
+
+[^1]: A footnote.
+[^en-2]: Second endnote.
+
+Next paragraph.
+[HTML]
+<p>Paragraph with footnote<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a> and endnote<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a>.</p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> A footnote.</p>
+</aside>
+<p>Next paragraph.</p>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Second endnote.</p>
+</li>
+</ol>
+</section>

@@ -16,6 +16,21 @@ const mdBeforeSameBacklink = mdit().use(footnotes, {
   beforeSameBacklink: true,
 });
 
+const mdEndnoteCustomLabel = mdit().use(footnotes, {
+  endnotesLabelPrefix: 'X',
+});
+
+const mdEndnoteHeading = mdit().use(footnotes, {
+  endnotesUseHeading: true,
+  endnotesSectionClass: 'endnotes',
+});
+
+const mdEndnoteMixed = mdit().use(footnotes);
+
+const mdEndnoteDisabled = mdit().use(footnotes, {
+  endnotesPrefix: '',
+});
+
 let __dirname = path.dirname(new URL(import.meta.url).pathname)
 const isWindows = (process.platform === 'win32')
 if (isWindows) {
@@ -26,6 +41,11 @@ const testData = {
   noOption: __dirname + path.sep +  'examples.txt',
   afterBacklink: __dirname + path.sep +  'examples-after-backlink.txt',
   beforeSameBacklink: __dirname + path.sep +  'examples-before-same-backlink.txt',
+  endnotes: __dirname + path.sep + 'examples-endnotes.txt',
+  endnotesCustomPrefix: __dirname + path.sep + 'examples-endnotes-custom-prefix.txt',
+  endnotesHeading: __dirname + path.sep + 'examples-endnotes-heading.txt',
+  endnotesMixed: __dirname + path.sep + 'examples-endnotes-mixed.txt',
+  endnotesDisabled: __dirname + path.sep + 'examples-endnotes-disabled.txt',
 }
 
 const getTestData = (pat) => {
@@ -104,5 +124,10 @@ let pass = true
 pass = runTest(md, testData.noOption, pass)
 pass = runTest(mdAfterBacklink, testData.afterBacklink, pass)
 pass = runTest(mdBeforeSameBacklink, testData.beforeSameBacklink, pass)
+pass = runTest(md, testData.endnotes, pass)
+pass = runTest(mdEndnoteCustomLabel, testData.endnotesCustomPrefix, pass)
+pass = runTest(mdEndnoteHeading, testData.endnotesHeading, pass)
+pass = runTest(mdEndnoteMixed, testData.endnotesMixed, pass)
+pass = runTest(mdEndnoteDisabled, testData.endnotesDisabled, pass)
 
 if (pass) console.log('Passed all test.')

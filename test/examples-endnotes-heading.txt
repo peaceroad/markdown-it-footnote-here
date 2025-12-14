@@ -1,0 +1,14 @@
+[Markdown]
+With heading endnote.[^en-1]
+
+[^en-1]: Heading text should come from aria label.
+[HTML]
+<p>With heading endnote.<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a></p>
+<section id="endnotes" class="endnotes" role="doc-endnotes">
+<h2>Notes</h2>
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Heading text should come from aria label.</p>
+</li>
+</ol>
+</section>
