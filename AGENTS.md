@@ -18,7 +18,7 @@ This document captures the current implementation workflow, especially around fo
    - `footnote_ref` resolves references via `selectNoteEnv` and tags tokens with `isEndnote`.
 4) Rendering flow:
    - `footnote_anchor` injects backlinks/labels into footnote content.
-   - `endnotes_move` removes endnote blocks from inline positions and appends a `<section>` (attributes ordered aria-label → id → class → role).
+   - `endnotes_move` removes endnote blocks from inline positions and appends a `<section>` (attributes ordered aria-label -> id -> class -> role).
 5) When adding options:
    - Update `README.md` and add fixtures under `test/`.
    - Extend `test/test.js` to load the new fixtures.
