@@ -1,10 +1,6 @@
-const render_footnote_anchor_name = (tokens, idx, opt, env) => {
-  let n = tokens[idx].meta.id + 1
-  if (!opt.afterBacklinkSuffixArabicNumerals) n = Number(n).toString()
-  let prefix = ''
-  if (typeof env.docId === 'string') {
-    prefix = '-' + env.docId + '-'
-  }
+const render_footnote_anchor_name = (tokens, idx, _opt, env) => {
+  const n = tokens[idx].meta.id + 1
+  const prefix = typeof env.docId === 'string' ? `-${env.docId}-` : ''
   return prefix + n
 }
 
@@ -22,28 +18,29 @@ const ensureNotesEnv = (env, key) => {
 
 const ENDNOTE_DOM_PREFIX = 'en'
 
-const getDomPrefix = (isEndnote) => (isEndnote ? ENDNOTE_DOM_PREFIX : 'fn')
-const getDisplayPrefix = (isEndnote, opt) => (isEndnote ? opt.endnotesLabelPrefix : '')
-
-const getNotesMeta = (token, env) => {
-  if (token.meta && token.meta.isEndnote) return env.endnotes
-  return env.footnotes
-}
-
 const selectNoteEnv = (label, env, preferEndnote) => {
-  const endRefs = env.endnotes && env.endnotes.refs
   const footRefs = env.footnotes && env.footnotes.refs
-  const endId = endRefs && endRefs[':' + label]
-  const footId = footRefs && footRefs[':' + label]
+  const endRefs = env.endnotes && env.endnotes.refs
+  if (!footRefs && !endRefs) return null
+  const key = ':' + label
 
-  if (preferEndnote && endId !== undefined) {
-    return { env: env.endnotes, id: endId, isEndnote: true }
+  if (preferEndnote && endRefs) {
+    const endId = endRefs[key]
+    if (endId !== undefined) {
+      return { env: env.endnotes, id: endId, isEndnote: true }
+    }
   }
-  if (footId !== undefined) {
-    return { env: env.footnotes, id: footId, isEndnote: false }
+  if (footRefs) {
+    const footId = footRefs[key]
+    if (footId !== undefined) {
+      return { env: env.footnotes, id: footId, isEndnote: false }
+    }
   }
-  if (endId !== undefined) {
-    return { env: env.endnotes, id: endId, isEndnote: true }
+  if (!preferEndnote && endRefs) {
+    const endId = endRefs[key]
+    if (endId !== undefined) {
+      return { env: env.endnotes, id: endId, isEndnote: true }
+    }
   }
   return null
 }
@@ -52,18 +49,19 @@ const render_footnote_ref = (tokens, idx, opt, env) => {
   const token = tokens[idx]
   const id = token.meta.id
   const n = id + 1
-  const notes = getNotesMeta(token, env)
-  const isEndnote = !!token.meta.isEndnote
-  const noteDomPrefix = getDomPrefix(isEndnote)
-  const displayPrefix = getDisplayPrefix(isEndnote, opt)
-  notes._refCount = notes._refCount || {}
-  let refIdx = (notes._refCount[id] = (notes._refCount[id] || 0) + 1)
-  if (!opt.afterBacklinkSuffixArabicNumerals) {
-    refIdx = String.fromCharCode(96 + refIdx)
-  }
+  const isEndnote = token.meta.isEndnote
+  const notes = isEndnote ? env.endnotes : env.footnotes
+  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
+  const displayPrefix = isEndnote ? opt.endnotesLabelPrefix : ''
+  const totalCounts = notes.totalCounts ? notes.totalCounts[id] || 0 : 0
   let suffix = ''
   let label = `${opt.labelBra}${displayPrefix}${n}${opt.labelKet}`
-  if (notes.totalCounts && notes.totalCounts[id] > 1) {
+  if (totalCounts > 1) {
+    const refCount = notes._refCount || (notes._refCount = [])
+    let refIdx = (refCount[id] = (refCount[id] || 0) + 1)
+    if (!opt.afterBacklinkSuffixArabicNumerals) {
+      refIdx = String.fromCharCode(96 + refIdx)
+    }
     suffix = '-' + refIdx
     if (opt.beforeSameBacklink) {
       label = `${opt.labelBra}${displayPrefix}${n}${suffix}${opt.labelKet}`
@@ -77,13 +75,13 @@ const render_footnote_ref = (tokens, idx, opt, env) => {
 
 const render_footnote_open = (tokens, idx, opt, env, slf) => {
   const id = slf.rules.footnote_anchor_name(tokens, idx, opt, env, slf)
-  const isEndnote = tokens[idx].meta && tokens[idx].meta.isEndnote
+  const isEndnote = tokens[idx].meta.isEndnote
   if (isEndnote) return `<li id="${ENDNOTE_DOM_PREFIX}${id}">\n`
   return `<aside id="fn${id}" class="fn" role="doc-footnote">\n`
 }
 
 const render_footnote_close = (tokens, idx) => {
-  const isEndnote = tokens[idx].meta && tokens[idx].meta.isEndnote
+  const isEndnote = tokens[idx].meta.isEndnote
   if (isEndnote) return `</li>\n`
   return `</aside>\n`
 }
@@ -91,15 +89,16 @@ const render_footnote_close = (tokens, idx) => {
 const render_footnote_anchor = (tokens, idx, opt, env) => {
   const idNum = tokens[idx].meta.id
   const n = idNum + 1
-  const isEndnote = tokens[idx].meta && tokens[idx].meta.isEndnote
-  const notes = getNotesMeta(tokens[idx], env)
-  const counts = notes && notes.totalCounts
-  const noteDomPrefix = getDomPrefix(!!isEndnote)
-  const displayPrefix = getDisplayPrefix(!!isEndnote, opt)
+  const isEndnote = tokens[idx].meta.isEndnote
+  const notes = isEndnote ? env.endnotes : env.footnotes
+  const totalCounts = notes.totalCounts
+  const count = totalCounts ? totalCounts[idNum] || 0 : 0
+  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
+  const displayPrefix = isEndnote ? opt.endnotesLabelPrefix : ''
 
-  if (opt.beforeSameBacklink && counts && counts[idNum] > 1) {
+  if (opt.beforeSameBacklink && count > 1) {
     let links = ''
-    for (let i = 1; i <= counts[idNum]; i++) {
+    for (let i = 1; i <= count; i++) {
       const suffix = '-' + String.fromCharCode(96 + i); // a, b, c ...
       links += `<a href="#${noteDomPrefix}-ref${n}${suffix}" class="${noteDomPrefix}-backlink" role="doc-backlink">${opt.backLabelBra}${displayPrefix}${n}${suffix}${opt.backLabelKet}</a>`
     }
@@ -110,7 +109,7 @@ const render_footnote_anchor = (tokens, idx, opt, env) => {
     return `<span class="${noteDomPrefix}-label">${opt.backLabelBra}${displayPrefix}${n}${opt.backLabelKet}</span> `
   }
 
-  if (counts && counts[idNum] > 1) {
+  if (count > 1) {
     return `<a href="#${noteDomPrefix}-ref${n}-a" class="${noteDomPrefix}-backlink" role="doc-backlink">${opt.backLabelBra}${displayPrefix}${n}${opt.backLabelKet}</a> `
   }
 
@@ -199,7 +198,7 @@ const footnote_plugin = (md, option) =>{
     fn.refs[':' + label] = id
 
     const token = new state.Token('footnote_open', '', 1)
-    token.meta = { id, label, isEndnote }
+    token.meta = { id, isEndnote }
     token.level = state.level++
     state.tokens.push(token)
     fn.positions.push(state.tokens.length - 1)
@@ -266,14 +265,13 @@ const footnote_plugin = (md, option) =>{
     }
 
     let pos = start + 2
-    let found = false
-    for (; pos < posMax && !found; pos++) {
+    for (; pos < posMax; pos++) {
       const ch = src.charCodeAt(pos)
+      if (ch === 0x5D /* ] */) break
       if (ch === 0x20 || ch === 0x0A) { return false; } // space or linebreak
-      if (ch === 0x5D /* ] */) { found = true; break; }
     }
 
-    if (!found || pos === start + 2) { return false; }
+    if (pos >= posMax || pos === start + 2) { return false; }
     pos++; // pos set next ']' position.
 
     const label = src.slice(start + 2, pos - 1)
@@ -285,16 +283,11 @@ const footnote_plugin = (md, option) =>{
     if (!silent) {
       const fn = resolved.env
 
-      if (!fn.list) { fn.list = []; }
-
-      const footnoteId = fn.list.length
-      fn.list[footnoteId] = { label, count: 0 }
-
-      fn.totalCounts = fn.totalCounts || {}
+      fn.totalCounts = fn.totalCounts || []
       fn.totalCounts[resolved.id] = (fn.totalCounts[resolved.id] || 0) + 1
 
       const token = state.push('footnote_ref', '', 0)
-      token.meta = { id: resolved.id, label, isEndnote: resolved.isEndnote }
+      token.meta = { id: resolved.id, isEndnote: resolved.isEndnote }
     }
 
     state.pos = pos
@@ -306,13 +299,37 @@ const footnote_plugin = (md, option) =>{
     const tokens = state.tokens
     const createAnchorToken = (id, isEndnote) => {
       const aToken = new state.Token('footnote_anchor', '', 0)
-      aToken.meta = { id, label: id + 1, isEndnote }
+      aToken.meta = { id, isEndnote }
       return aToken
     }
 
     const injectAnchors = (notes, isEndnote) => {
       const positions = notes && notes.positions
       if (!positions || positions.length === 0) { return; }
+
+      if (opt.afterBacklink) {
+        const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
+        const totalCounts = notes.totalCounts
+        for (let j = 0, len = positions.length; j < len; ++j) {
+          const posOpen = positions[j]
+          if (posOpen + 2 >= tokens.length) continue
+
+          const t1 = tokens[posOpen + 1]
+          if (t1.type !== 'paragraph_open') continue
+
+          const t2 = tokens[posOpen + 2]
+          if (t2.type !== 'inline') continue
+
+          const t0 = tokens[posOpen]
+          const id = t0.meta.id
+
+          t2.children.unshift(createAnchorToken(id, isEndnote))
+          const n = id + 1
+          const counts = totalCounts && totalCounts[id]
+          t2.children.push(createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote))
+        }
+        return
+      }
 
       for (let j = 0, len = positions.length; j < len; ++j) {
         const posOpen = positions[j]
@@ -326,14 +343,8 @@ const footnote_plugin = (md, option) =>{
 
         const t0 = tokens[posOpen]
         const id = t0.meta.id
-        const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
 
         t2.children.unshift(createAnchorToken(id, isEndnote))
-        if (opt.afterBacklink) {
-          const n = id + 1
-          const counts = notes.totalCounts && notes.totalCounts[id]
-          t2.children.push(createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote))
-        }
       }
     }
 
@@ -348,27 +359,31 @@ const footnote_plugin = (md, option) =>{
     }
 
     const tokens = state.tokens
-    const endnoteBlocks = []
+    const endnoteTokens = []
 
-    for (let i = 0; i < tokens.length; i++) {
+    let write = 0
+    let i = 0
+    while (i < tokens.length) {
       const token = tokens[i]
-      if (token.type !== 'footnote_open' || !token.meta || !token.meta.isEndnote) continue
-
-      let j = i + 1
-      while (j < tokens.length) {
-        const t = tokens[j]
-        if (t.type === 'footnote_close' && t.meta && t.meta.isEndnote) {
-          j++
-          break
+      if (token.type === 'footnote_open' && token.meta && token.meta.isEndnote) {
+        endnoteTokens.push(token)
+        i++
+        while (i < tokens.length) {
+          const t = tokens[i]
+          endnoteTokens.push(t)
+          if (t.type === 'footnote_close' && t.meta && t.meta.isEndnote) {
+            i++
+            break
+          }
+          i++
         }
-        j++
+        continue
       }
-      endnoteBlocks.push(tokens.slice(i, j))
-      tokens.splice(i, j - i)
-      i--
+      tokens[write++] = token
+      i++
     }
 
-    if (endnoteBlocks.length === 0) return
+    if (endnoteTokens.length === 0) return
 
     const sectionOpen = new state.Token('html_block', '', 0)
     const attrs = []
@@ -388,10 +403,9 @@ const footnote_plugin = (md, option) =>{
     const sectionClose = new state.Token('html_block', '', 0)
     sectionClose.content = '</ol>\n</section>\n'
 
+    tokens.length = write
     tokens.push(sectionOpen)
-    endnoteBlocks.forEach(block => {
-      tokens.push(...block)
-    })
+    for (let j = 0; j < endnoteTokens.length; j++) tokens.push(endnoteTokens[j])
     tokens.push(sectionClose)
   }
 
