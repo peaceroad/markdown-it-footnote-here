@@ -45,6 +45,7 @@ const testData = {
   endnotesCustomPrefix: __dirname + path.sep + 'examples-endnotes-custom-prefix.txt',
   endnotesHeading: __dirname + path.sep + 'examples-endnotes-heading.txt',
   endnotesMixed: __dirname + path.sep + 'examples-endnotes-mixed.txt',
+  endnotesDuplicate: __dirname + path.sep + 'examples-endnotes-duplicate.txt',
   endnotesDisabled: __dirname + path.sep + 'examples-endnotes-disabled.txt',
 }
 
@@ -128,6 +129,7 @@ pass = runTest(md, testData.endnotes, pass)
 pass = runTest(mdEndnoteCustomLabel, testData.endnotesCustomPrefix, pass)
 pass = runTest(mdEndnoteHeading, testData.endnotesHeading, pass)
 pass = runTest(mdEndnoteMixed, testData.endnotesMixed, pass)
+pass = runTest(md, testData.endnotesDuplicate, pass)
 pass = runTest(mdEndnoteDisabled, testData.endnotesDisabled, pass)
 
 if (pass) console.log('Passed all test.')

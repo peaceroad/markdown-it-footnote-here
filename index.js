@@ -194,14 +194,24 @@ const footnote_plugin = (md, option) =>{
 
     const isEndnote = isEndnoteLabel(label, opt)
     const fn = ensureNotesEnv(state.env, isEndnote ? 'endnotes' : 'footnotes')
-    const id = fn.length++
-    fn.refs[':' + label] = id
+    const refKey = ':' + label
+    const existingId = fn.refs[refKey]
+    const isDuplicate = isEndnote && existingId !== undefined
+    const id = isDuplicate ? existingId : fn.length++
+    if (!isDuplicate) {
+      fn.refs[refKey] = id
+    }
 
-    const token = new state.Token('footnote_open', '', 1)
-    token.meta = { id, isEndnote }
-    token.level = state.level++
-    state.tokens.push(token)
-    fn.positions.push(state.tokens.length - 1)
+    let tokenStart = 0
+    if (!isDuplicate) {
+      const token = new state.Token('footnote_open', '', 1)
+      token.meta = { id, isEndnote }
+      token.level = state.level++
+      state.tokens.push(token)
+      fn.positions.push(state.tokens.length - 1)
+    } else {
+      tokenStart = state.tokens.length
+    }
 
     const oldBMark = bMarks[startLine]
     const oldTShift = tShift[startLine]
@@ -246,10 +256,14 @@ const footnote_plugin = (md, option) =>{
     state.sCount[startLine] = oldSCount
     state.bMarks[startLine] = oldBMark
 
-    const closeToken = new state.Token('footnote_close', '', -1)
-    closeToken.level = --state.level
-    closeToken.meta = { isEndnote }
-    state.tokens.push(closeToken)
+    if (!isDuplicate) {
+      const closeToken = new state.Token('footnote_close', '', -1)
+      closeToken.level = --state.level
+      closeToken.meta = { isEndnote }
+      state.tokens.push(closeToken)
+    } else {
+      state.tokens.length = tokenStart
+    }
 
     return true
   }
