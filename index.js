@@ -203,11 +203,12 @@ const footnote_plugin = (md, option) =>{
     }
 
     let tokenStart = 0
+    let openToken = null
     if (!isDuplicate) {
-      const token = new state.Token('footnote_open', '', 1)
-      token.meta = { id, isEndnote }
-      token.level = state.level++
-      state.tokens.push(token)
+      openToken = new state.Token('footnote_open', '', 1)
+      openToken.meta = { id, isEndnote }
+      openToken.level = state.level++
+      state.tokens.push(openToken)
       fn.positions.push(state.tokens.length - 1)
     } else {
       tokenStart = state.tokens.length
@@ -249,6 +250,9 @@ const footnote_plugin = (md, option) =>{
     }
 
     state.md.block.tokenize(state, startLine, endLine, true)
+    if (openToken) {
+      openToken.map = [startLine, state.line]
+    }
 
     state.parentType = oldParentType
     state.blkIndent -= 4
