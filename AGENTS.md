@@ -37,7 +37,11 @@ This document captures the current implementation workflow, especially around fo
 - If `endnotesPrefix` is empty, endnotes are disabled.
 - `endnotesUseHeading` true: render `<h2>` with `endnotesSectionAriaLabel`; false: use `aria-label` without heading.
 - Backlink aria option name is `afterBacklinkAriaLabelPrefix` (the old typo key is removed).
+- If `beforeSameBacklink` and `afterBacklink` are both true, both backlink styles are rendered.
 - For duplicate warnings, classes/messages are:
   - block: `footnote-error`
   - backlink: `footnote-error-backlink`
   - message span: `footnote-error-message`
+- `duplicateDefinitionPolicy` has no callback hook yet; diagnostics are available at `env.footnoteHereDiagnostics.duplicateDefinitions`.
+- Endnotes heading tag is fixed to `<h2>` when `endnotesUseHeading` is true (no heading-level option yet).
+- `docId` cache assumes `env.docId` is stable for a given `env` object during a render cycle.

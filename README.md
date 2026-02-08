@@ -78,6 +78,7 @@ npm install @peaceroad/markdown-it-footnote-here
 
 - beforeSameBacklink (boolean): false by default. When true, duplicate footnote references will use suffixes (a, b, ... z, aa, ab, ...) and generate matching backlinks in footnote definitions.
 - afterBacklink (boolean): false by default. If true, backlinks (↩) are placed at the end of the footnote content instead of before it.
+  - Note: If `beforeSameBacklink` is also true, both backlink styles are rendered (before-label links and trailing ↩ links). Use one style if you need a cleaner output.
 - afterBacklinkContent (string): The content for the backlink (default: '↩').
 - afterBacklinkWithNumber (boolean): If true, backlink will show a number or letter suffix.
 - afterBacklinkSuffixArabicNumerals (boolean): If true, backlink suffix uses numbers (1, 2, ...) instead of letters (a, b, ...).
@@ -103,3 +104,4 @@ npm install @peaceroad/markdown-it-footnote-here
 - Diagnostics: when duplicates are detected, details are collected in `env.footnoteHereDiagnostics.duplicateDefinitions`.
 - Security note: option strings used in HTML output are escaped before rendering (labels, aria/id/class values, heading text, backlink content/message).
 - `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.
+  - Runtime note: when using `env.docId`, prefer a new `env` object per render; changing `env.docId` on a reused object may keep prior cached id parts.
