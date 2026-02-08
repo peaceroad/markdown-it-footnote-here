@@ -26,7 +26,9 @@ HTML:
 <p>A paragraph.</p>
 ```
 
-Notice. When multiple instances of the same footnote number appear in the main content, the default behavior is that the backlink from the footnote will refer to the first instance.
+Notice.
+- When multiple instances of the same footnote number appear in the main content, the default behavior is that the backlink from the footnote will refer to the first instance.
+- When the same footnote/endnote label is defined multiple times, behavior is controlled by `duplicateDefinitionPolicy` (default: `warn`).
 
 ## Endnotes
 
@@ -74,12 +76,13 @@ npm install @peaceroad/markdown-it-footnote-here
 
 ## Options
 
-- beforeSameBacklink (boolean): false by default. When true, duplicate footnote references will use letter suffixes (a, b, c, ...) and generate matching backlinks in footnote definitions.
+- beforeSameBacklink (boolean): false by default. When true, duplicate footnote references will use suffixes (a, b, ... z, aa, ab, ...) and generate matching backlinks in footnote definitions.
 - afterBacklink (boolean): false by default. If true, backlinks (↩) are placed at the end of the footnote content instead of before it.
 - afterBacklinkContent (string): The content for the backlink (default: '↩').
 - afterBacklinkWithNumber (boolean): If true, backlink will show a number or letter suffix.
 - afterBacklinkSuffixArabicNumerals (boolean): If true, backlink suffix uses numbers (1, 2, ...) instead of letters (a, b, ...).
-- afterBacklinkdAriaLabelPrefix (string): Prefix for aria-label of backlink (default: 'Back to reference ').
+- afterBacklinkAriaLabelPrefix (string): Prefix for aria-label of backlink (default: 'Back to reference ').
+  - Breaking change: `afterBacklinkdAriaLabelPrefix` (old typo key) has been removed.
 - labelBra (string): Bracket to use before footnote number (default: '[').
 - labelKet (string): Bracket to use after footnote number (default: ']'). 
 - labelSupTag (boolean): If true, wraps footnote reference in `<sup>` tag.
@@ -91,3 +94,12 @@ npm install @peaceroad/markdown-it-footnote-here
 - endnotesSectionClass (string): `class` attribute for the endnotes section wrapper; omitted when empty (default: `''`).
 - endnotesSectionAriaLabel (string): Used as `aria-label` when `endnotesUseHeading` is false. When `endnotesUseHeading` is true, this value becomes the heading text (default: `'Notes'`).
 - endnotesUseHeading (boolean): If true, render `<h2>{endnotesSectionAriaLabel}</h2>` and omit `aria-label`. If false (default), omit the heading and set `aria-label` when provided.
+- duplicateDefinitionPolicy (string): Policy for duplicate labels (`'warn' | 'ignore' | 'strict'`, default: `'warn'`).
+  - `'warn'`: keep first definition, mark note block with `footnote-error`, mark backlinks with `footnote-error-backlink`, and prepend `<span class="footnote-error-message">...</span>` in note content.
+  - `'ignore'`: keep first definition and do not add warning classes/messages.
+  - `'strict'`: throw an error on duplicate label.
+- duplicateDefinitionMessage (string): Message text used in warning span when policy is `warn` (default: `'[Duplicate footnote label detected. Using the first definition.]'`).
+- injectErrorStyle (boolean): If true and policy is `warn`, inject a `<style>` block once per document for `.footnote-error-message` and `.footnote-error-backlink` (includes `prefers-color-scheme` and `forced-colors` handling). Default: `false`.
+- Diagnostics: when duplicates are detected, details are collected in `env.footnoteHereDiagnostics.duplicateDefinitions`.
+- Security note: option strings used in HTML output are escaped before rendering (labels, aria/id/class values, heading text, backlink content/message).
+- `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.

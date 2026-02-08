@@ -1,0 +1,48 @@
+[Markdown]
+A paragraph.[^1] Another.[^1]
+
+[^1]: First footnote.
+[^1]: Duplicate should be ignored.
+[HTML]
+<style>
+:root {
+  --footnote-error-text: #b42318;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --footnote-error-text: #fca5a5;
+  }
+}
+.footnote-error-message {
+  color: var(--footnote-error-text);
+  font-weight: 600;
+  margin-right: 0.35em;
+}
+.footnote-error-backlink {
+  color: var(--footnote-error-text);
+  position: relative;
+}
+.footnote-error-backlink::before {
+  content: "";
+  position: absolute;
+  left: -0.35em;
+  top: 0.08em;
+  bottom: 0.08em;
+  width: 2px;
+  background: var(--footnote-error-text);
+  border-radius: 1px;
+}
+@media (forced-colors: active) {
+  .footnote-error-message,
+  .footnote-error-backlink {
+    color: CanvasText;
+  }
+  .footnote-error-backlink::before {
+    background: CanvasText;
+  }
+}
+</style>
+<p>A paragraph.<a href="#fn1" id="fn-ref1-a" class="fn-noteref" role="doc-noteref">[1]</a> Another.<a href="#fn1" id="fn-ref1-b" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn footnote-error" role="doc-footnote">
+<p><a href="#fn-ref1-a" class="fn-backlink footnote-error-backlink" role="doc-backlink">[1]</a> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First footnote.</p>
+</aside>

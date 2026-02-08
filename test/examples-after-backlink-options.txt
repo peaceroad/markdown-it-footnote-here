@@ -1,0 +1,9 @@
+[Markdown]
+Text[^1] again[^1] and once more[^1].
+
+[^1]: Note.
+[HTML]
+<p>Text<a href="#fn1" id="fn-ref1-1" class="fn-noteref" role="doc-noteref">[1]</a> again<a href="#fn1" id="fn-ref1-2" class="fn-noteref" role="doc-noteref">[1]</a> and once more<a href="#fn1" id="fn-ref1-3" class="fn-noteref" role="doc-noteref">[1]</a>.</p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><span class="fn-label">[1]</span> Note. <a href="#fn-ref1-1" class="fn-backlink" role="doc-backlink" aria-label="Go to 1-1">BACK<sup>1</sup></a><a href="#fn-ref1-2" class="fn-backlink" role="doc-backlink" aria-label="Go to 1-2">BACK<sup>2</sup></a><a href="#fn-ref1-3" class="fn-backlink" role="doc-backlink" aria-label="Go to 1-3">BACK<sup>3</sup></a></p>
+</aside>

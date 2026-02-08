@@ -1,7 +1,25 @@
+const getDocIdPart = (env) => {
+  if (!env || typeof env !== 'object') return ''
+  const cached = docIdPartCache.get(env)
+  if (cached !== undefined) return cached
+
+  let value = ''
+  if (typeof env.docId === 'string' && env.docId.length > 0) {
+    value = `-${encodeURIComponent(env.docId)}-`
+  }
+  docIdPartCache.set(env, value)
+  return value
+}
+
+const getRefIdBase = (noteDomPrefix, env) => {
+  const docIdPart = getDocIdPart(env)
+  if (!docIdPart) return `${noteDomPrefix}-ref`
+  return `${noteDomPrefix}${docIdPart}ref`
+}
+
 const render_footnote_anchor_name = (tokens, idx, _opt, env) => {
   const n = tokens[idx].meta.id + 1
-  const prefix = typeof env.docId === 'string' ? `-${env.docId}-` : ''
-  return prefix + n
+  return getDocIdPart(env) + n
 }
 
 const isEndnoteLabel = (label, opt) => {
@@ -17,6 +35,75 @@ const ensureNotesEnv = (env, key) => {
 }
 
 const ENDNOTE_DOM_PREFIX = 'en'
+const FOOTNOTE_DOM_PREFIX = 'fn'
+const DEFAULT_DUPLICATE_DEFINITION_MESSAGE = '[Duplicate footnote label detected. Using the first definition.]'
+const ERROR_STYLE_CONTENT = '<style>\n:root {\n  --footnote-error-text: #b42318;\n}\n@media (prefers-color-scheme: dark) {\n  :root {\n    --footnote-error-text: #fca5a5;\n  }\n}\n.footnote-error-message {\n  color: var(--footnote-error-text);\n  font-weight: 600;\n  margin-right: 0.35em;\n}\n.footnote-error-backlink {\n  color: var(--footnote-error-text);\n  position: relative;\n}\n.footnote-error-backlink::before {\n  content: "";\n  position: absolute;\n  left: -0.35em;\n  top: 0.08em;\n  bottom: 0.08em;\n  width: 2px;\n  background: var(--footnote-error-text);\n  border-radius: 1px;\n}\n@media (forced-colors: active) {\n  .footnote-error-message,\n  .footnote-error-backlink {\n    color: CanvasText;\n  }\n  .footnote-error-backlink::before {\n    background: CanvasText;\n  }\n}\n</style>\n'
+const docIdPartCache = new WeakMap()
+
+const hasLabelWhitespace = (label) => {
+  for (let i = 0; i < label.length; i++) {
+    if (label.charCodeAt(i) <= 0x20) return true
+  }
+  return false
+}
+
+const alphaSuffixCache = ['']
+const arabicSuffixCache = ['']
+
+const formatRefSuffix = (index, useArabicNumerals) => {
+  const cache = useArabicNumerals ? arabicSuffixCache : alphaSuffixCache
+  if (cache[index]) return cache[index]
+
+  if (useArabicNumerals) {
+    const value = String(index)
+    cache[index] = value
+    return value
+  }
+
+  if (index <= 26) {
+    const value = String.fromCharCode(96 + index)
+    cache[index] = value
+    return value
+  }
+
+  let value = ''
+  let n = index
+  while (n > 0) {
+    n--
+    value = String.fromCharCode(97 + (n % 26)) + value
+    n = Math.floor(n / 26)
+  }
+  cache[index] = value
+  return value
+}
+
+const findLabelEnd = (src, start, max) => {
+  for (let i = start; i < max - 1; i++) {
+    if (src.charCodeAt(i) === 0x5D /* ] */ && src.charCodeAt(i + 1) === 0x3A /* : */) {
+      return i
+    }
+  }
+  return -1
+}
+
+const normalizeDuplicateDefinitionPolicy = (policy) => {
+  if (policy === 'ignore' || policy === 'warn' || policy === 'strict') return policy
+  return 'warn'
+}
+
+const toOptionString = (value, fallback = '') => {
+  if (value === null || value === undefined) return fallback
+  return String(value)
+}
+
+const hasAnyDuplicateDefinition = (notes) => {
+  if (!notes || !notes.duplicateCounts) return false
+  const counts = notes.duplicateCounts
+  for (let i = 0; i < counts.length; i++) {
+    if (counts[i] > 0) return true
+  }
+  return false
+}
 
 const selectNoteEnv = (label, env, preferEndnote) => {
   const footRefs = env.footnotes && env.footnotes.refs
@@ -47,28 +134,29 @@ const selectNoteEnv = (label, env, preferEndnote) => {
 
 const render_footnote_ref = (tokens, idx, opt, env) => {
   const token = tokens[idx]
+  const safe = opt._safe
   const id = token.meta.id
   const n = id + 1
   const isEndnote = token.meta.isEndnote
   const notes = isEndnote ? env.endnotes : env.footnotes
-  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
-  const displayPrefix = isEndnote ? opt.endnotesLabelPrefix : ''
+  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : FOOTNOTE_DOM_PREFIX
+  const displayPrefix = isEndnote ? safe.endnotesLabelPrefix : ''
+  const docIdPart = getDocIdPart(env)
+  const noteIdBase = `${noteDomPrefix}${docIdPart}`
+  const refIdBase = getRefIdBase(noteDomPrefix, env)
   const totalCounts = notes.totalCounts ? notes.totalCounts[id] || 0 : 0
   let suffix = ''
-  let label = `${opt.labelBra}${displayPrefix}${n}${opt.labelKet}`
+  let label = `${safe.labelBra}${displayPrefix}${n}${safe.labelKet}`
   if (totalCounts > 1) {
     const refCount = notes._refCount || (notes._refCount = [])
-    let refIdx = (refCount[id] = (refCount[id] || 0) + 1)
-    if (!opt.afterBacklinkSuffixArabicNumerals) {
-      refIdx = String.fromCharCode(96 + refIdx)
-    }
-    suffix = '-' + refIdx
+    const refIdx = (refCount[id] = (refCount[id] || 0) + 1)
+    suffix = '-' + formatRefSuffix(refIdx, opt.afterBacklinkSuffixArabicNumerals)
     if (opt.beforeSameBacklink) {
-      label = `${opt.labelBra}${displayPrefix}${n}${suffix}${opt.labelKet}`
+      label = `${safe.labelBra}${displayPrefix}${n}${suffix}${safe.labelKet}`
     }
   }
-  const href = `${noteDomPrefix}${n}`
-  let refCont = `<a href="#${href}" id="${noteDomPrefix}-ref${n}${suffix}" class="${noteDomPrefix}-noteref" role="doc-noteref">${label}</a>`
+  const href = `${noteIdBase}${n}`
+  let refCont = `<a href="#${href}" id="${refIdBase}${n}${suffix}" class="${noteDomPrefix}-noteref" role="doc-noteref">${label}</a>`
   if (opt.labelSupTag) refCont = `<sup class="${noteDomPrefix}-noteref-wrapper">${refCont}</sup>`
   return refCont
 }
@@ -76,8 +164,16 @@ const render_footnote_ref = (tokens, idx, opt, env) => {
 const render_footnote_open = (tokens, idx, opt, env, slf) => {
   const id = slf.rules.footnote_anchor_name(tokens, idx, opt, env, slf)
   const isEndnote = tokens[idx].meta.isEndnote
-  if (isEndnote) return `<li id="${ENDNOTE_DOM_PREFIX}${id}">\n`
-  return `<aside id="fn${id}" class="fn" role="doc-footnote">\n`
+  const noteId = tokens[idx].meta.id
+  const notes = isEndnote ? env.endnotes : env.footnotes
+  const hasDuplicate = !!(notes && notes.duplicateCounts && notes.duplicateCounts[noteId] > 0)
+  if (isEndnote) {
+    if (hasDuplicate) return `<li id="${ENDNOTE_DOM_PREFIX}${id}" class="footnote-error">\n`
+    return `<li id="${ENDNOTE_DOM_PREFIX}${id}">\n`
+  }
+  let className = FOOTNOTE_DOM_PREFIX
+  if (hasDuplicate) className += ' footnote-error'
+  return `<aside id="${FOOTNOTE_DOM_PREFIX}${id}" class="${className}" role="doc-footnote">\n`
 }
 
 const render_footnote_close = (tokens, idx) => {
@@ -87,54 +183,67 @@ const render_footnote_close = (tokens, idx) => {
 }
 
 const render_footnote_anchor = (tokens, idx, opt, env) => {
+  const safe = opt._safe
   const idNum = tokens[idx].meta.id
   const n = idNum + 1
   const isEndnote = tokens[idx].meta.isEndnote
+  const hasDuplicate = !!tokens[idx].meta.hasDuplicateDefinition
   const notes = isEndnote ? env.endnotes : env.footnotes
   const totalCounts = notes.totalCounts
   const count = totalCounts ? totalCounts[idNum] || 0 : 0
-  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
-  const displayPrefix = isEndnote ? opt.endnotesLabelPrefix : ''
+  const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : FOOTNOTE_DOM_PREFIX
+  const displayPrefix = isEndnote ? safe.endnotesLabelPrefix : ''
+  const refIdBase = getRefIdBase(noteDomPrefix, env)
+  const backlinkClass = hasDuplicate
+    ? `${noteDomPrefix}-backlink footnote-error-backlink`
+    : `${noteDomPrefix}-backlink`
+  const duplicateMessage = hasDuplicate ? `${opt._duplicateDefinitionMessageHtml} ` : ''
 
   if (opt.beforeSameBacklink && count > 1) {
     let links = ''
     for (let i = 1; i <= count; i++) {
-      const suffix = '-' + String.fromCharCode(96 + i); // a, b, c ...
-      links += `<a href="#${noteDomPrefix}-ref${n}${suffix}" class="${noteDomPrefix}-backlink" role="doc-backlink">${opt.backLabelBra}${displayPrefix}${n}${suffix}${opt.backLabelKet}</a>`
+      const suffix = '-' + formatRefSuffix(i, opt.afterBacklinkSuffixArabicNumerals)
+      links += `<a href="#${refIdBase}${n}${suffix}" class="${backlinkClass}" role="doc-backlink">${safe.backLabelBra}${displayPrefix}${n}${suffix}${safe.backLabelKet}</a>`
     }
-    return links + ' '
+    return links + ' ' + duplicateMessage
   }
 
   if (opt.afterBacklink) {
-    return `<span class="${noteDomPrefix}-label">${opt.backLabelBra}${displayPrefix}${n}${opt.backLabelKet}</span> `
+    return `<span class="${noteDomPrefix}-label">${safe.backLabelBra}${displayPrefix}${n}${safe.backLabelKet}</span> ${duplicateMessage}`
   }
 
   if (count > 1) {
-    return `<a href="#${noteDomPrefix}-ref${n}-a" class="${noteDomPrefix}-backlink" role="doc-backlink">${opt.backLabelBra}${displayPrefix}${n}${opt.backLabelKet}</a> `
+    const firstSuffix = '-' + formatRefSuffix(1, opt.afterBacklinkSuffixArabicNumerals)
+    return `<a href="#${refIdBase}${n}${firstSuffix}" class="${backlinkClass}" role="doc-backlink">${safe.backLabelBra}${displayPrefix}${n}${safe.backLabelKet}</a> ${duplicateMessage}`
   }
 
-  return `<a href="#${noteDomPrefix}-ref${n}" class="${noteDomPrefix}-backlink" role="doc-backlink">${opt.backLabelBra}${displayPrefix}${n}${opt.backLabelKet}</a> `
+  return `<a href="#${refIdBase}${n}" class="${backlinkClass}" role="doc-backlink">${safe.backLabelBra}${displayPrefix}${n}${safe.backLabelKet}</a> ${duplicateMessage}`
 }
 
-function createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote) {
-  const displayPrefix = isEndnote ? opt.endnotesLabelPrefix : ''
+function createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote, hasDuplicate) {
+  const safe = opt._safe
+  const displayPrefix = isEndnote ? safe.endnotesLabelPrefix : ''
+  const refIdBase = getRefIdBase(noteDomPrefix, state.env)
+  const backlinkClass = hasDuplicate
+    ? `${noteDomPrefix}-backlink footnote-error-backlink`
+    : `${noteDomPrefix}-backlink`
   let html = ' '
   if (counts && counts > 1) {
     for (let i = 1; i <= counts; i++) {
-      const suffixChar = opt.afterBacklinkSuffixArabicNumerals ? i : String.fromCharCode(96 + i)
+      const suffixChar = formatRefSuffix(i, opt.afterBacklinkSuffixArabicNumerals)
       const suffix = '-' + suffixChar
-      html += `<a href="#${noteDomPrefix}-ref${n}${suffix}" class="${noteDomPrefix}-backlink" role="doc-backlink"`
-      if (opt.afterBacklinkdAriaLabelPrefix) html += ` aria-label="${opt.afterBacklinkdAriaLabelPrefix}${displayPrefix}${n}${suffix}"`
-      html += `>${opt.afterBacklinkContent}`
+      html += `<a href="#${refIdBase}${n}${suffix}" class="${backlinkClass}" role="doc-backlink"`
+      if (safe.afterBacklinkAriaLabelPrefix) html += ` aria-label="${safe.afterBacklinkAriaLabelPrefix}${displayPrefix}${n}${suffix}"`
+      html += `>${safe.afterBacklinkContent}`
       if (opt.afterBacklinkWithNumber) {
         html += `<sup>${suffixChar}</sup>`
       }
       html += `</a>`
     }
   } else {
-    html += `<a href="#${noteDomPrefix}-ref${n}" class="${noteDomPrefix}-backlink" role="doc-backlink"`
-    if (opt.afterBacklinkdAriaLabelPrefix) html += ` aria-label="${opt.afterBacklinkdAriaLabelPrefix}${displayPrefix}${n}"`
-    html += `>${opt.afterBacklinkContent}</a>`
+    html += `<a href="#${refIdBase}${n}" class="${backlinkClass}" role="doc-backlink"`
+    if (safe.afterBacklinkAriaLabelPrefix) html += ` aria-label="${safe.afterBacklinkAriaLabelPrefix}${displayPrefix}${n}"`
+    html += `>${safe.afterBacklinkContent}</a>`
   }
   const token = new state.Token('html_inline', '', 0)
   token.content = html
@@ -153,15 +262,43 @@ const footnote_plugin = (md, option) =>{
     afterBacklinkContent: '↩',
     afterBacklinkWithNumber: false,
     afterBacklinkSuffixArabicNumerals: false,
-    afterBacklinkdAriaLabelPrefix: 'Back to reference ', /* 戻る：本文参照 */
+    afterBacklinkAriaLabelPrefix: 'Back to reference ', /* 戻る：本文参照 */
     endnotesPrefix: 'en-',
     endnotesLabelPrefix: 'E',
     endnotesSectionId: 'endnotes',
     endnotesSectionClass: '',
     endnotesSectionAriaLabel: 'Notes',
     endnotesUseHeading: false,
+    duplicateDefinitionPolicy: 'warn',
+    duplicateDefinitionMessage: DEFAULT_DUPLICATE_DEFINITION_MESSAGE,
+    injectErrorStyle: false,
   }
-  if (option) Object.assign(opt, option)
+  if (option) {
+    Object.assign(opt, option)
+  }
+  opt.duplicateDefinitionPolicy = normalizeDuplicateDefinitionPolicy(opt.duplicateDefinitionPolicy)
+  if (typeof opt.duplicateDefinitionMessage !== 'string') {
+    opt.duplicateDefinitionMessage = DEFAULT_DUPLICATE_DEFINITION_MESSAGE
+  }
+  const escapeHtml = md.utils.escapeHtml
+  const escapeOption = (value, fallback = '') => escapeHtml(toOptionString(value, fallback))
+  opt._safe = {
+    labelBra: escapeOption(opt.labelBra, '['),
+    labelKet: escapeOption(opt.labelKet, ']'),
+    backLabelBra: escapeOption(opt.backLabelBra, '['),
+    backLabelKet: escapeOption(opt.backLabelKet, ']'),
+    afterBacklinkContent: escapeOption(opt.afterBacklinkContent, '↩'),
+    afterBacklinkAriaLabelPrefix: escapeOption(opt.afterBacklinkAriaLabelPrefix, 'Back to reference '),
+    endnotesLabelPrefix: escapeOption(opt.endnotesLabelPrefix, 'E'),
+    endnotesSectionId: escapeOption(opt.endnotesSectionId, 'endnotes'),
+    endnotesSectionClass: escapeOption(opt.endnotesSectionClass, ''),
+    endnotesSectionAriaLabel: escapeOption(opt.endnotesSectionAriaLabel, 'Notes'),
+    duplicateDefinitionMessage: escapeOption(opt.duplicateDefinitionMessage, DEFAULT_DUPLICATE_DEFINITION_MESSAGE),
+  }
+  opt._duplicateDefinitionMessageHtml = `<span class="footnote-error-message">${opt._safe.duplicateDefinitionMessage}</span>`
+  const duplicatePolicy = opt.duplicateDefinitionPolicy
+  const duplicateWarnEnabled = duplicatePolicy === 'warn'
+  const duplicateStrictEnabled = duplicatePolicy === 'strict'
 
   const isSpace = md.utils.isSpace
 
@@ -170,6 +307,32 @@ const footnote_plugin = (md, option) =>{
   md.renderer.rules.footnote_close = (tokens, idx, _options, env, slf) => render_footnote_close(tokens, idx, opt, env, slf)
   md.renderer.rules.footnote_anchor = (tokens, idx, _options, env, slf) => render_footnote_anchor(tokens, idx, opt, env, slf)
   md.renderer.rules.footnote_anchor_name  = (tokens, idx, _options, env, slf) => render_footnote_anchor_name(tokens, idx, opt, env, slf)
+
+  // Reset plugin-owned env state for each parse to avoid cross-render leaks.
+  const footnote_reset = (state) => {
+    if (!state.env) {
+      state.env = {}
+      return
+    }
+    if (state.env.footnotes) delete state.env.footnotes
+    if (state.env.endnotes) delete state.env.endnotes
+    if (state.env.footnoteHereDiagnostics) delete state.env.footnoteHereDiagnostics
+  }
+
+  const registerDuplicateDefinition = (state, notes, id, label, isEndnote, line) => {
+    notes.duplicateCounts = notes.duplicateCounts || []
+    notes.duplicateCounts[id] = (notes.duplicateCounts[id] || 0) + 1
+
+    if (!state.env.footnoteHereDiagnostics) {
+      state.env.footnoteHereDiagnostics = { duplicateDefinitions: [] }
+    }
+    state.env.footnoteHereDiagnostics.duplicateDefinitions.push({
+      label,
+      isEndnote,
+      line: line + 1,
+      noteId: id,
+    })
+  }
 
   // Process footnote block definition
   const footnote_def = (state, startLine, endLine, silent) => {
@@ -182,12 +345,11 @@ const footnote_plugin = (md, option) =>{
 
     if (src.charCodeAt(start) !== 0x5B/* [ */ || src.charCodeAt(start + 1) !== 0x5E/* ^ */) { return false; }
 
-    // locate end of label efficiently
-    const idx = src.indexOf(']:', start + 2)
-    if (idx < start + 3 || idx > max - 2) { return false; }
+    const idx = findLabelEnd(src, start + 2, max)
+    if (idx < start + 3) { return false; }
 
     const label = src.slice(start + 2, idx)
-    if (label.indexOf(' ') >= 0) { return false; }
+    if (hasLabelWhitespace(label)) { return false; }
     const pos = idx + 2
 
     if (silent) { return true; }
@@ -196,10 +358,17 @@ const footnote_plugin = (md, option) =>{
     const fn = ensureNotesEnv(state.env, isEndnote ? 'endnotes' : 'footnotes')
     const refKey = ':' + label
     const existingId = fn.refs[refKey]
-    const isDuplicate = isEndnote && existingId !== undefined
+    const isDuplicate = existingId !== undefined
     const id = isDuplicate ? existingId : fn.length++
     if (!isDuplicate) {
       fn.refs[refKey] = id
+    } else {
+      if (duplicateStrictEnabled) {
+        throw new Error(`[markdown-it-footnote-here] Duplicate footnote label "${label}" at line ${startLine + 1}.`)
+      }
+      if (duplicateWarnEnabled) {
+        registerDuplicateDefinition(state, fn, id, label, isEndnote, startLine)
+      }
     }
 
     let tokenStart = 0
@@ -286,7 +455,7 @@ const footnote_plugin = (md, option) =>{
     for (; pos < posMax; pos++) {
       const ch = src.charCodeAt(pos)
       if (ch === 0x5D /* ] */) break
-      if (ch === 0x20 || ch === 0x0A) { return false; } // space or linebreak
+      if (ch <= 0x20) { return false; } // whitespace/control chars are invalid in label
     }
 
     if (pos >= posMax || pos === start + 2) { return false; }
@@ -315,39 +484,13 @@ const footnote_plugin = (md, option) =>{
   const footnote_anchor = (state) => {
     if (!state.env.footnotes && !state.env.endnotes) return
     const tokens = state.tokens
-    const createAnchorToken = (id, isEndnote) => {
-      const aToken = new state.Token('footnote_anchor', '', 0)
-      aToken.meta = { id, isEndnote }
-      return aToken
-    }
 
     const injectAnchors = (notes, isEndnote) => {
       const positions = notes && notes.positions
       if (!positions || positions.length === 0) { return; }
-
-      if (opt.afterBacklink) {
-        const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : 'fn'
-        const totalCounts = notes.totalCounts
-        for (let j = 0, len = positions.length; j < len; ++j) {
-          const posOpen = positions[j]
-          if (posOpen + 2 >= tokens.length) continue
-
-          const t1 = tokens[posOpen + 1]
-          if (t1.type !== 'paragraph_open') continue
-
-          const t2 = tokens[posOpen + 2]
-          if (t2.type !== 'inline') continue
-
-          const t0 = tokens[posOpen]
-          const id = t0.meta.id
-
-          t2.children.unshift(createAnchorToken(id, isEndnote))
-          const n = id + 1
-          const counts = totalCounts && totalCounts[id]
-          t2.children.push(createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote))
-        }
-        return
-      }
+      const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : FOOTNOTE_DOM_PREFIX
+      const totalCounts = notes.totalCounts
+      const duplicateCounts = notes.duplicateCounts
 
       for (let j = 0, len = positions.length; j < len; ++j) {
         const posOpen = positions[j]
@@ -361,13 +504,31 @@ const footnote_plugin = (md, option) =>{
 
         const t0 = tokens[posOpen]
         const id = t0.meta.id
-
-        t2.children.unshift(createAnchorToken(id, isEndnote))
+        const duplicateDef = !!(duplicateCounts && duplicateCounts[id] > 0)
+        const aToken = new state.Token('footnote_anchor', '', 0)
+        aToken.meta = { id, isEndnote, hasDuplicateDefinition: duplicateDef }
+        t2.children.unshift(aToken)
+        if (opt.afterBacklink) {
+          const n = id + 1
+          const counts = totalCounts && totalCounts[id]
+          t2.children.push(createAfterBackLinkToken(state, counts, n, opt, noteDomPrefix, isEndnote, duplicateDef))
+        }
       }
     }
 
     injectAnchors(state.env.footnotes, false)
     injectAnchors(state.env.endnotes, true)
+  }
+
+  const inject_error_style = (state) => {
+    if (!opt.injectErrorStyle) return
+    if (!duplicateWarnEnabled) return
+    const hasDuplicate = hasAnyDuplicateDefinition(state.env.footnotes) || hasAnyDuplicateDefinition(state.env.endnotes)
+    if (!hasDuplicate) return
+
+    const token = new state.Token('html_block', '', 0)
+    token.content = ERROR_STYLE_CONTENT
+    state.tokens.unshift(token)
   }
 
   const move_endnotes_to_section = (state) => {
@@ -404,16 +565,17 @@ const footnote_plugin = (md, option) =>{
     if (endnoteTokens.length === 0) return
 
     const sectionOpen = new state.Token('html_block', '', 0)
+    const safe = opt._safe
     const attrs = []
     if (!opt.endnotesUseHeading && opt.endnotesSectionAriaLabel) {
-      attrs.push(`aria-label="${opt.endnotesSectionAriaLabel}"`)
+      attrs.push(`aria-label="${safe.endnotesSectionAriaLabel}"`)
     }
-    if (opt.endnotesSectionId) attrs.push(`id="${opt.endnotesSectionId}"`)
-    if (opt.endnotesSectionClass) attrs.push(`class="${opt.endnotesSectionClass}"`)
+    if (opt.endnotesSectionId) attrs.push(`id="${safe.endnotesSectionId}"`)
+    if (opt.endnotesSectionClass) attrs.push(`class="${safe.endnotesSectionClass}"`)
     attrs.push('role="doc-endnotes"')
     let sectionContent = `<section ${attrs.join(' ')}>\n`
     if (opt.endnotesUseHeading && opt.endnotesSectionAriaLabel) {
-      sectionContent += `<h2>${opt.endnotesSectionAriaLabel}</h2>\n`
+      sectionContent += `<h2>${safe.endnotesSectionAriaLabel}</h2>\n`
     }
     sectionContent += '<ol>\n'
     sectionOpen.content = sectionContent
@@ -427,10 +589,12 @@ const footnote_plugin = (md, option) =>{
     tokens.push(sectionClose)
   }
 
+  md.core.ruler.before('block', 'footnote_reset', footnote_reset)
   md.block.ruler.before('reference', 'footnote_def', footnote_def, { alt: [ 'paragraph', 'reference' ] })
   md.inline.ruler.after('image', 'footnote_ref', footnote_ref)
   md.core.ruler.after('inline', 'footnote_anchor', footnote_anchor)
-  md.core.ruler.after('footnote_anchor', 'endnotes_move', move_endnotes_to_section)
+  md.core.ruler.after('footnote_anchor', 'footnote_error_style', inject_error_style)
+  md.core.ruler.after('footnote_error_style', 'endnotes_move', move_endnotes_to_section)
 }
 
 export default footnote_plugin

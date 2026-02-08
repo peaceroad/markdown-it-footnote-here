@@ -1,0 +1,14 @@
+[Markdown]
+Text[^en-1]
+
+[^en-1]: Note.
+[HTML]
+<p>Text<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a></p>
+<section role="doc-endnotes">
+<h2>Custom Heading</h2>
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Note.</p>
+</li>
+</ol>
+</section>

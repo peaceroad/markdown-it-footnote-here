@@ -1,0 +1,17 @@
+[Markdown]
+Text endnote[^n-1] and footnote[^en-1].
+
+[^n-1]: Endnote custom prefix.
+[^en-1]: Footnote because custom prefix is n-.
+[HTML]
+<p>Text endnote<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a> and footnote<a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">[1]</a>.</p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a> Footnote because custom prefix is n-.</p>
+</aside>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Endnote custom prefix.</p>
+</li>
+</ol>
+</section>

@@ -1,0 +1,17 @@
+[Markdown]
+Text footnote[^1] and endnote[^en-1].
+
+[^1]: Footnote.
+[^en-1]: Endnote.
+[HTML]
+<p>Text footnote<sup class="fn-noteref-wrapper"><a href="#fn1" id="fn-ref1" class="fn-noteref" role="doc-noteref">(1)</a></sup> and endnote<sup class="en-noteref-wrapper"><a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">(E1)</a></sup>.</p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">{1}</a> Footnote.</p>
+</aside>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">{E1}</a> Endnote.</p>
+</li>
+</ol>
+</section>

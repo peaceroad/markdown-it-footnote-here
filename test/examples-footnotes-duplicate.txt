@@ -1,0 +1,10 @@
+[Markdown]
+A paragraph.[^1] Another.[^1]
+
+[^1]: First footnote.
+[^1]: Duplicate should be ignored.
+[HTML]
+<p>A paragraph.<a href="#fn1" id="fn-ref1-a" class="fn-noteref" role="doc-noteref">[1]</a> Another.<a href="#fn1" id="fn-ref1-b" class="fn-noteref" role="doc-noteref">[1]</a></p>
+<aside id="fn1" class="fn footnote-error" role="doc-footnote">
+<p><a href="#fn-ref1-a" class="fn-backlink footnote-error-backlink" role="doc-backlink">[1]</a> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First footnote.</p>
+</aside>
