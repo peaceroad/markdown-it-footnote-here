@@ -45,3 +45,4 @@ This document captures the current implementation workflow, especially around fo
 - `duplicateDefinitionPolicy` has no callback hook yet; diagnostics are available at `env.footnoteHereDiagnostics.duplicateDefinitions`.
 - Endnotes heading tag is fixed to `<h2>` when `endnotesUseHeading` is true (no heading-level option yet).
 - `docId` cache assumes `env.docId` is stable for a given `env` object during a render cycle.
+- Renderer rules should tolerate missing `env` (for example, inline-only renders) and treat missing notes as empty to avoid crashes.

@@ -138,16 +138,16 @@ const render_footnote_ref = (tokens, idx, opt, env) => {
   const id = token.meta.id
   const n = id + 1
   const isEndnote = token.meta.isEndnote
-  const notes = isEndnote ? env.endnotes : env.footnotes
+  const notes = isEndnote ? env && env.endnotes : env && env.footnotes
   const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : FOOTNOTE_DOM_PREFIX
   const displayPrefix = isEndnote ? safe.endnotesLabelPrefix : ''
   const docIdPart = getDocIdPart(env)
   const noteIdBase = `${noteDomPrefix}${docIdPart}`
   const refIdBase = getRefIdBase(noteDomPrefix, env)
-  const totalCounts = notes.totalCounts ? notes.totalCounts[id] || 0 : 0
+  const totalCounts = notes && notes.totalCounts ? notes.totalCounts[id] || 0 : 0
   let suffix = ''
   let label = `${safe.labelBra}${displayPrefix}${n}${safe.labelKet}`
-  if (totalCounts > 1) {
+  if (totalCounts > 1 && notes) {
     const refCount = notes._refCount || (notes._refCount = [])
     const refIdx = (refCount[id] = (refCount[id] || 0) + 1)
     suffix = '-' + formatRefSuffix(refIdx, opt.afterBacklinkSuffixArabicNumerals)
@@ -165,7 +165,7 @@ const render_footnote_open = (tokens, idx, opt, env, slf) => {
   const id = slf.rules.footnote_anchor_name(tokens, idx, opt, env, slf)
   const isEndnote = tokens[idx].meta.isEndnote
   const noteId = tokens[idx].meta.id
-  const notes = isEndnote ? env.endnotes : env.footnotes
+  const notes = isEndnote ? env && env.endnotes : env && env.footnotes
   const hasDuplicate = !!(notes && notes.duplicateCounts && notes.duplicateCounts[noteId] > 0)
   if (isEndnote) {
     if (hasDuplicate) return `<li id="${ENDNOTE_DOM_PREFIX}${id}" class="footnote-error">\n`
@@ -188,8 +188,8 @@ const render_footnote_anchor = (tokens, idx, opt, env) => {
   const n = idNum + 1
   const isEndnote = tokens[idx].meta.isEndnote
   const hasDuplicate = !!tokens[idx].meta.hasDuplicateDefinition
-  const notes = isEndnote ? env.endnotes : env.footnotes
-  const totalCounts = notes.totalCounts
+  const notes = isEndnote ? env && env.endnotes : env && env.footnotes
+  const totalCounts = notes && notes.totalCounts
   const count = totalCounts ? totalCounts[idNum] || 0 : 0
   const noteDomPrefix = isEndnote ? ENDNOTE_DOM_PREFIX : FOOTNOTE_DOM_PREFIX
   const displayPrefix = isEndnote ? safe.endnotesLabelPrefix : ''

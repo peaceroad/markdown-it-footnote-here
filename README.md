@@ -105,3 +105,4 @@ npm install @peaceroad/markdown-it-footnote-here
 - Security note: option strings used in HTML output are escaped before rendering (labels, aria/id/class values, heading text, backlink content/message).
 - `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.
   - Runtime note: when using `env.docId`, prefer a new `env` object per render; changing `env.docId` on a reused object may keep prior cached id parts.
+- Renderer note: hosts may call render paths without a populated `env` (for example, inline-only renders). In that case, references render without count-based suffixes; pass a shared `env` during parse+render to keep counts consistent.
