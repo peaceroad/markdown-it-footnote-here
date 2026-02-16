@@ -106,6 +106,7 @@ const hasAnyDuplicateDefinition = (notes) => {
 }
 
 const selectNoteEnv = (label, env, preferEndnote) => {
+  if (!env || typeof env !== 'object') return null
   const footRefs = env.footnotes && env.footnotes.refs
   const endRefs = env.endnotes && env.endnotes.refs
   if (!footRefs && !endRefs) return null
@@ -147,7 +148,7 @@ const render_footnote_ref = (tokens, idx, opt, env) => {
   const totalCounts = notes && notes.totalCounts ? notes.totalCounts[id] || 0 : 0
   let suffix = ''
   let label = `${safe.labelBra}${displayPrefix}${n}${safe.labelKet}`
-  if (totalCounts > 1 && notes) {
+  if (totalCounts > 1) {
     const refCount = notes._refCount || (notes._refCount = [])
     const refIdx = (refCount[id] = (refCount[id] || 0) + 1)
     suffix = '-' + formatRefSuffix(refIdx, opt.afterBacklinkSuffixArabicNumerals)
