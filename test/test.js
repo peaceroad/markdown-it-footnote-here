@@ -388,6 +388,36 @@ const runDirectTests = (pass) => {
     console.log(e.message)
   }
 
+  try {
+    const env = { docId: 'doc1' }
+    md.render('A[^1]\n\n[^1]: one\n', env)
+    env.docId = 'doc2'
+    const rendered = md.render('B[^1]\n\n[^1]: two\n', env)
+    assert.ok(rendered.includes('href="#fn-doc2-1"'))
+    assert.ok(rendered.includes('id="fn-doc2-ref1"'))
+    assert.ok(!rendered.includes('fn-doc1'))
+    console.log('Test: docid-reused-env-updated >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: docid-reused-env-updated >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const env = {}
+    const tokens = mdBeforeSameBacklink.parse('A[^1][^1]\n\n[^1]: one\n', env)
+    const rendered1 = mdBeforeSameBacklink.renderer.render(tokens, mdBeforeSameBacklink.options, env)
+    const rendered2 = mdBeforeSameBacklink.renderer.render(tokens, mdBeforeSameBacklink.options, env)
+    assert.strictEqual(rendered1, rendered2)
+    assert.ok(rendered1.includes('id="fn-ref1-a"'))
+    assert.ok(rendered1.includes('id="fn-ref1-b"'))
+    console.log('Test: repeated-render-stable >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: repeated-render-stable >>> failed')
+    console.log(e.message)
+  }
+
   return pass
 }
 

@@ -101,8 +101,8 @@ npm install @peaceroad/markdown-it-footnote-here
   - `'strict'`: throw an error on duplicate label.
 - duplicateDefinitionMessage (string): Message text used in warning span when policy is `warn` (default: `'[Duplicate footnote label detected. Using the first definition.]'`).
 - injectErrorStyle (boolean): If true and policy is `warn`, inject a `<style>` block once per document for `.footnote-error-message` and `.footnote-error-backlink` (includes `prefers-color-scheme` and `forced-colors` handling). Default: `false`.
-- Diagnostics: when duplicates are detected, details are collected in `env.footnoteHereDiagnostics.duplicateDefinitions`.
+- Diagnostics: when duplicates are detected under `duplicateDefinitionPolicy: 'warn'`, details are collected in `env.footnoteHereDiagnostics.duplicateDefinitions`.
 - Security note: option strings used in HTML output are escaped before rendering (labels, aria/id/class values, heading text, backlink content/message).
 - `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.
-  - Runtime note: when using `env.docId`, prefer a new `env` object per render; changing `env.docId` on a reused object may keep prior cached id parts.
+- Reused-render note: repeated renders are stable because duplicate-reference suffixes are fixed during parse, and changing `env.docId` on a reused `env` object updates generated ids consistently.
 - Renderer note: hosts may call render paths without a populated `env` (for example, inline-only renders). In that case, references render without count-based suffixes; pass a shared `env` during parse+render to keep counts consistent.

@@ -5,11 +5,13 @@ This document captures the current implementation workflow, especially around fo
 ## Code overview
 - `index.js`:
   - Rendering helpers: `render_footnote_ref`, `render_footnote_open/close`, `render_footnote_anchor`, and `createAfterBackLinkToken`.
+  - Renderer compatibility: `footnote_open` still resolves ids via renderer rule `footnote_anchor_name`, so custom renderer overrides keep working.
   - Parsing: custom block rule `footnote_def`, inline rule `footnote_ref`, core rule `footnote_anchor`, style injection rule `footnote_error_style`, and `endnotes_move` to append endnotes at the end.
   - Endnote handling: labels starting with `endnotesPrefix` (default `en-`) are endnotes; DOM ids/classes use fixed `en`.
   - Duplicate definition handling: `duplicateDefinitionPolicy` (`warn|ignore|strict`), diagnostics in `env.footnoteHereDiagnostics.duplicateDefinitions`, optional style injection via `injectErrorStyle`.
   - Security: option strings are escaped before HTML output (`opt._safe`).
-  - `env.docId` is URL-encoded and consistently applied to note/ref ids.
+  - `env.docId` is URL-encoded and consistently applied to note/ref ids; cached encoding must track `env.docId` changes on reused env objects.
+  - Long-lived helper caches (`docId` memo, suffix tables) live in the plugin-instance closure, not module-global state.
 
 ## Adding features / making changes
 1) Review options and defaults in `index.js` (`opt` object).
@@ -18,7 +20,7 @@ This document captures the current implementation workflow, especially around fo
 3) Parsing flow:
    - `footnote_def` registers notes into `env.footnotes` or `env.endnotes` based on `endnotesPrefix`.
    - On duplicate labels, behavior depends on `duplicateDefinitionPolicy`.
-   - `footnote_ref` resolves references via `selectNoteEnv` and tags tokens with `isEndnote`.
+   - `footnote_ref` resolves references from `env.footnotes` / `env.endnotes` and tags tokens with `isEndnote` plus a stable per-note reference ordinal for suffix rendering.
 4) Rendering flow:
    - `footnote_anchor` injects backlinks/labels into footnote content.
    - `footnote_error_style` injects one `<style>` block only when enabled and duplicates exist.
@@ -42,7 +44,7 @@ This document captures the current implementation workflow, especially around fo
   - block: `footnote-error`
   - backlink: `footnote-error-backlink`
   - message span: `footnote-error-message`
-- `duplicateDefinitionPolicy` has no callback hook yet; diagnostics are available at `env.footnoteHereDiagnostics.duplicateDefinitions`.
+- `duplicateDefinitionPolicy` has no callback hook yet; diagnostics are available at `env.footnoteHereDiagnostics.duplicateDefinitions` when policy is `warn`.
 - Endnotes heading tag is fixed to `<h2>` when `endnotesUseHeading` is true (no heading-level option yet).
-- `docId` cache assumes `env.docId` is stable for a given `env` object during a render cycle.
+- `docId` encoding cache must invalidate when `env.docId` changes on a reused `env` object.
 - Renderer rules should tolerate missing `env` (for example, inline-only renders) and treat missing notes as empty to avoid crashes.
