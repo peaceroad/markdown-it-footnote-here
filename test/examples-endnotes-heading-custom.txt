@@ -5,7 +5,7 @@ Text[^en-1]
 [HTML]
 <p>Text<a href="#en1" id="en-ref1" class="en-noteref" role="doc-noteref">[E1]</a></p>
 <section role="doc-endnotes">
-<h2>Custom Heading</h2>
+<h3>Custom Heading</h3>
 <ol>
 <li id="en1">
 <p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Note.</p>

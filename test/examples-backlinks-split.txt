@@ -1,0 +1,18 @@
+[Markdown]
+A[^1][^1] B[^en-1][^en-1]
+
+[^1]: foot
+[^en-1]: end
+
+[HTML]
+<p>A<a href="#fn1" id="fn-ref1-a" class="fn-noteref" role="doc-noteref">[1]</a><a href="#fn1" id="fn-ref1-b" class="fn-noteref" role="doc-noteref">[1]</a> B<a href="#en1" id="en-ref1-a" class="en-noteref" role="doc-noteref">[E1]</a><a href="#en1" id="en-ref1-b" class="en-noteref" role="doc-noteref">[E1]</a></p>
+<aside id="fn1" class="fn" role="doc-footnote">
+<p><a href="#fn-ref1-a" class="fn-backlink" role="doc-backlink">[1]</a> foot</p>
+</aside>
+<section aria-label="Notes" id="endnotes" role="doc-endnotes">
+<ol>
+<li id="en1">
+<p><span class="en-label">[E1]</span> end <a href="#en-ref1-a" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1-a">↩<sup>a</sup></a><a href="#en-ref1-b" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1-b">↩<sup>b</sup></a></p>
+</li>
+</ol>
+</section>
