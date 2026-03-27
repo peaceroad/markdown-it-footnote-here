@@ -28,12 +28,13 @@ HTML:
 
 Notice.
 - When multiple instances of the same footnote number appear in the main content, the default behavior is that the backlink from the footnote will refer to the first instance.
+- Endnotes default to a trailing backlink style, and repeated endnote references render backlinks for all occurrences with visible `a`, `b`, `c`, ... suffix markers.
 - When the same footnote/endnote label is defined multiple times, behavior is controlled by `duplicates.policy` (default: `warn`).
 - When a note starts or ends with a non-paragraph block such as a list, heading, blockquote, or fence, the plugin inserts standalone label/backlink paragraphs as needed so numbering and return links remain visible.
 
 ## Endnotes
 
-When a footnote label starts with `endnotes.prefix` (default: `en-`), it is collected at the end of the document and rendered as endnotes. The reference/backlink label for endnotes uses `references.endnote.prefix` (default: `E`), so endnotes appear as `[E1]`, `[E2]`, ...
+When a footnote label starts with `endnotes.prefix` (default: `en-`), it is collected at the end of the document and rendered as endnotes. The reference/backlink label for endnotes uses `references.endnote.prefix` (default: `E`), so endnotes appear as `[E1]`, `[E2]`, ... By default, endnotes render the visible label at the start of the note body and the return link at the end.
 
 Markdown:
 
@@ -53,7 +54,7 @@ HTML:
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> A endnote.</p>
+<p><span class="en-label">[E1]</span> A endnote. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 </ol>
 </section>
@@ -84,14 +85,15 @@ npm install @peaceroad/markdown-it-footnote-here
   - `footnote.brackets.open` / `.close`, `endnote.brackets.open` / `.close`: visible brackets around note reference labels. Default: `'['` and `']'`.
   - `footnote.wrapInSup` / `endnote.wrapInSup`: whether that kind of note reference is wrapped in `<sup>`. Default: `false`.
 - `backlinks` (object): controls labels and return links inside note bodies.
-  - `footnote.position` / `endnote.position`: `'before' | 'after' | 'both' | 'none'` (default: `'before'`).
-  - `footnote.duplicates` / `endnote.duplicates`: `'first' | 'all'` (default: `'first'`). `all` renders one backlink per repeated reference; `first` points back only to the first occurrence.
+  - `footnote.position` / `endnote.position`: `'before' | 'after' | 'both' | 'none'` (defaults: footnotes `'before'`, endnotes `'after'`).
+  - `footnote.duplicates` / `endnote.duplicates`: `'first' | 'all'` (defaults: footnotes `'first'`, endnotes `'all'`). `all` renders one backlink per repeated reference; `first` points back only to the first occurrence.
   - `footnote.brackets.open` / `.close`, `endnote.brackets.open` / `.close`: visible brackets used for leading note labels/backlinks. Default: `'['` and `']'`.
   - `footnote.content` / `endnote.content`: trailing backlink content. Default: `'↩'`.
   - `footnote.duplicateMarker` / `endnote.duplicateMarker`: visible duplicate suffix style, `'alpha' | 'numeric'` (default: `'alpha'`).
-  - `footnote.trailingLabel` / `endnote.trailingLabel`: whether trailing backlinks render a visible duplicate suffix marker, `'none' | 'marker'` (default: `'none'`).
+  - `footnote.trailingLabel` / `endnote.trailingLabel`: whether trailing backlinks render a visible duplicate suffix marker, `'none' | 'marker'` (defaults: footnotes `'none'`, endnotes `'marker'`).
   - `footnote.ariaLabelPrefix` / `endnote.ariaLabelPrefix`: prefix for trailing backlink `aria-label` values (default: `'Back to reference '`).
   - Note: when `position` includes `before` and `duplicates` is `all`, duplicate references and leading backlinks use visible suffixes such as `a`, `b`, `c` (or `1`, `2`, `3` when `duplicateMarker: 'numeric'`).
+  - Note: default endnotes use trailing backlinks with visible suffix markers, so repeated endnote references render return links such as `↩a`, `↩b`, `↩c`.
   - Note: `position: 'none'` still renders a non-link note label so the note number remains visible.
 - `endnotes` (object): controls how endnotes are detected and where they are rendered.
   - `prefix`: prefix that marks a note as an endnote (default: `'en-'`). When empty, endnotes are disabled.

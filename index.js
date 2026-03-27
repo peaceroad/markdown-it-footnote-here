@@ -83,7 +83,7 @@ const createDefaultReferenceKind = (prefix) => ({
   wrapInSup: false,
 })
 
-const createDefaultBacklinkKind = () => ({
+const createDefaultBacklinkKind = (overrides) => ({
   position: 'before',
   duplicates: 'first',
   brackets: { open: '[', close: ']' },
@@ -91,6 +91,7 @@ const createDefaultBacklinkKind = () => ({
   duplicateMarker: 'alpha',
   trailingLabel: 'none',
   ariaLabelPrefix: DEFAULT_BACKLINK_ARIA_LABEL_PREFIX,
+  ...overrides,
 })
 
 const createDefaultReferences = () => ({
@@ -100,7 +101,11 @@ const createDefaultReferences = () => ({
 
 const createDefaultBacklinks = () => ({
   footnote: createDefaultBacklinkKind(),
-  endnote: createDefaultBacklinkKind(),
+  endnote: createDefaultBacklinkKind({
+    position: 'after',
+    duplicates: 'all',
+    trailingLabel: 'marker',
+  }),
 })
 
 const createDefaultEndnotes = () => ({

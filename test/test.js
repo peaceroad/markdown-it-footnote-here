@@ -31,12 +31,6 @@ const mdBacklinkOptions = createMd({
     endnote: { position: 'after', duplicates: 'all', content: 'BACK', trailingLabel: 'marker', duplicateMarker: 'numeric', ariaLabelPrefix: 'Go to ' },
   },
 })
-const mdSplitBacklinks = createMd({
-  backlinks: {
-    footnote: { position: 'before', duplicates: 'first' },
-    endnote: { position: 'after', duplicates: 'all', trailingLabel: 'marker' },
-  },
-})
 const mdLabelOptions = createMd({
   references: {
     footnote: { brackets: { open: '(', close: ')' }, wrapInSup: true },
@@ -579,7 +573,8 @@ const runDirectTests = (pass) => {
 
   try {
     const rendered = md.render('A[^en-1]\n\n[^en-1]:\n    - one\n')
-    assert.ok(rendered.includes('<li id="en1">\n<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a></p>\n<ul>'))
+    assert.ok(rendered.includes('<li id="en1">\n<p><span class="en-label">[E1]</span></p>\n<ul>'))
+    assert.ok(rendered.includes('</ul>\n<p><a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>'))
     console.log('Test: endnote-list-leading-label-paragraph >>>')
   } catch (e) {
     pass = false
@@ -674,7 +669,7 @@ const runDirectTests = (pass) => {
   }
 
   try {
-    const rendered = mdSplitBacklinks.render('A[^1][^1] B[^en-1][^en-1]\n\n[^1]: foot\n[^en-1]: end\n')
+    const rendered = md.render('A[^1][^1] B[^en-1][^en-1]\n\n[^1]: foot\n[^en-1]: end\n')
     assert.ok(rendered.includes('<aside id="fn1" class="fn" role="doc-footnote">\n<p><a href="#fn-ref1-a" class="fn-backlink" role="doc-backlink">[1]</a> foot</p>\n</aside>'))
     assert.ok(!rendered.includes('href="#fn-ref1-b" class="fn-backlink"'))
     assert.ok(rendered.includes('href="#en-ref1-a" class="en-backlink"'))
@@ -710,7 +705,7 @@ pass = runTest(mdEndnoteSectionAttrs, testData.endnotesSectionAttrs, pass)
 pass = runTest(md, testData.endnotesMixed, pass)
 pass = runTest(md, testData.endnotesDuplicate, pass)
 pass = runTest(mdEndnoteDisabled, testData.endnotesDisabled, pass)
-pass = runTest(mdSplitBacklinks, testData.splitBacklinks, pass)
+pass = runTest(md, testData.splitBacklinks, pass)
 pass = runDirectTests(pass)
 
 if (pass) {

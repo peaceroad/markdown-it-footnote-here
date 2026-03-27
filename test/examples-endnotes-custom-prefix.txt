@@ -7,7 +7,7 @@ Text with custom endnote.[^en-1]
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[X1]</a> Custom label prefix.</p>
+<p><span class="en-label">[X1]</span> Custom label prefix. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference X1">↩</a></p>
 </li>
 </ol>
 </section>

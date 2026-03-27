@@ -29,14 +29,14 @@ Paragraph C footnote[^3] endnote[^en-3].
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Endnote one.</p>
+<p><span class="en-label">[E1]</span> Endnote one. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 <li id="en2">
-<p><a href="#en-ref2" class="en-backlink" role="doc-backlink">[E2]</a> Endnote two.</p>
+<p><span class="en-label">[E2]</span> Endnote two. <a href="#en-ref2" class="en-backlink" role="doc-backlink" aria-label="Back to reference E2">↩</a></p>
 </li>
 <li id="en3">
-<p><a href="#en-ref3" class="en-backlink" role="doc-backlink">[E3]</a> Endnote three first paragraph.</p>
-<p>Endnote three second paragraph.</p>
+<p><span class="en-label">[E3]</span> Endnote three first paragraph.</p>
+<p>Endnote three second paragraph. <a href="#en-ref3" class="en-backlink" role="doc-backlink" aria-label="Back to reference E3">↩</a></p>
 </li>
 </ol>
 </section>

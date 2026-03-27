@@ -8,7 +8,7 @@ With heading endnote.[^en-1]
 <h2>Notes</h2>
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Heading text should come from aria label.</p>
+<p><span class="en-label">[E1]</span> Heading text should come from aria label. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 </ol>
 </section>

@@ -54,6 +54,10 @@ This document captures the current implementation workflow, especially around fo
   - `duplicateMarker`: `alpha | numeric`
   - `trailingLabel`: `none | marker`
   - `ariaLabelPrefix`
+- Current defaults intentionally differ by kind:
+  - footnotes: `position: 'before'`, `duplicates: 'first'`, `trailingLabel: 'none'`
+  - endnotes: `position: 'after'`, `duplicates: 'all'`, `trailingLabel: 'marker'`
+  - both kinds default to `duplicateMarker: 'alpha'`; alphabetic suffixes keep repeated-reference markers visually distinct from note numbers.
 - `endnotes.prefix` disables endnotes when empty.
 - `endnotes.section.useHeading` true: render `<h{headingLevel}>` with `endnotes.section.label`; false: use `aria-label` without heading.
 - `endnotes.section.headingLevel` is normalized to an integer in `1..6` and defaults to `2`.

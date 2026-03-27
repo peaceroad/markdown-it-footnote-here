@@ -7,7 +7,7 @@ Text[^en-1]
 <section aria-label="Custom Notes" class="notes-list" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Note.</p>
+<p><span class="en-label">[E1]</span> Note. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 </ol>
 </section>

@@ -10,7 +10,7 @@ A paragraph.
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> A endnote.</p>
+<p><span class="en-label">[E1]</span> A endnote. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 </ol>
 </section>
@@ -32,7 +32,7 @@ Next paragraph.
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1">
-<p><a href="#en-ref1" class="en-backlink" role="doc-backlink">[E1]</a> Second endnote.</p>
+<p><span class="en-label">[E1]</span> Second endnote. <a href="#en-ref1" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 </ol>
 </section>

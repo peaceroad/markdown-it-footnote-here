@@ -8,7 +8,7 @@ A paragraph.[^en-1] Another ref.[^en-1]
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1" class="footnote-error">
-<p><a href="#en-ref1-a" class="en-backlink footnote-error-backlink" role="doc-backlink">[E1]</a> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote.</p>
+<p><span class="en-label">[E1]</span> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote. <a href="#en-ref1-a" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1-a">↩<sup>a</sup></a><a href="#en-ref1-b" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1-b">↩<sup>b</sup></a></p>
 </li>
 </ol>
 </section>
@@ -25,10 +25,10 @@ A paragraph.[^en-1] Another endnote.[^en-2]
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1" class="footnote-error">
-<p><a href="#en-ref1" class="en-backlink footnote-error-backlink" role="doc-backlink">[E1]</a> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote.</p>
+<p><span class="en-label">[E1]</span> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote. <a href="#en-ref1" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1">↩</a></p>
 </li>
 <li id="en2">
-<p><a href="#en-ref2" class="en-backlink" role="doc-backlink">[E2]</a> Second endnote.</p>
+<p><span class="en-label">[E2]</span> Second endnote. <a href="#en-ref2" class="en-backlink" role="doc-backlink" aria-label="Back to reference E2">↩</a></p>
 </li>
 </ol>
 </section>
@@ -45,10 +45,10 @@ Paragraph.[^en-1] Another.[^en-1] And second.[^en-2] And again first.[^en-1]
 <section aria-label="Notes" id="endnotes" role="doc-endnotes">
 <ol>
 <li id="en1" class="footnote-error">
-<p><a href="#en-ref1-a" class="en-backlink footnote-error-backlink" role="doc-backlink">[E1]</a> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote.</p>
+<p><span class="en-label">[E1]</span> <span class="footnote-error-message">[Duplicate footnote label detected. Using the first definition.]</span> First endnote. <a href="#en-ref1-a" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1-a">↩<sup>a</sup></a><a href="#en-ref1-b" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1-b">↩<sup>b</sup></a><a href="#en-ref1-c" class="en-backlink footnote-error-backlink" role="doc-backlink" aria-label="Back to reference E1-c">↩<sup>c</sup></a></p>
 </li>
 <li id="en2">
-<p><a href="#en-ref2" class="en-backlink" role="doc-backlink">[E2]</a> Second endnote.</p>
+<p><span class="en-label">[E2]</span> Second endnote. <a href="#en-ref2" class="en-backlink" role="doc-backlink" aria-label="Back to reference E2">↩</a></p>
 </li>
 </ol>
 </section>
