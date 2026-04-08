@@ -42,6 +42,11 @@ const REMOVED_BACKLINK_ROOT_OPTION_HINTS = {
   trailingLabel: 'Use backlinks.footnote.trailingLabel and backlinks.endnote.trailingLabel.',
   ariaLabelPrefix: 'Use backlinks.footnote.ariaLabelPrefix and backlinks.endnote.ariaLabelPrefix.',
 }
+const DEFAULT_ENDNOTE_BACKLINK_OVERRIDES = {
+  position: 'after',
+  duplicates: 'all',
+  trailingLabel: 'marker',
+}
 
 const getRefIdBase = (noteDomPrefix, docIdPart) => {
   if (!docIdPart) return `${noteDomPrefix}-ref`
@@ -101,11 +106,7 @@ const createDefaultReferences = () => ({
 
 const createDefaultBacklinks = () => ({
   footnote: createDefaultBacklinkKind(),
-  endnote: createDefaultBacklinkKind({
-    position: 'after',
-    duplicates: 'all',
-    trailingLabel: 'marker',
-  }),
+  endnote: createDefaultBacklinkKind(DEFAULT_ENDNOTE_BACKLINK_OVERRIDES),
 })
 
 const createDefaultEndnotes = () => ({
@@ -223,17 +224,25 @@ const normalizeReferenceKind = (value, path, defaultPrefix) => {
   return normalized
 }
 
-const normalizeBacklinkKind = (value, path) => {
-  const normalized = createDefaultBacklinkKind()
+const normalizeBacklinkKind = (value, path, overrides) => {
+  const normalized = createDefaultBacklinkKind(overrides)
   const obj = ensureOptionObject(value, path)
   if (!obj) return normalized
   assertAllowedKeys(obj, BACKLINK_KIND_KEYS, path)
-  normalized.position = normalizeBacklinkPosition(obj.position)
-  normalized.duplicates = normalizeBacklinkDuplicates(obj.duplicates)
+  if (obj.position !== undefined) {
+    normalized.position = normalizeBacklinkPosition(obj.position)
+  }
+  if (obj.duplicates !== undefined) {
+    normalized.duplicates = normalizeBacklinkDuplicates(obj.duplicates)
+  }
   normalized.brackets = normalizeBrackets(obj.brackets, `${path}.brackets`, normalized.brackets)
   normalized.content = toOptionString(obj.content, normalized.content)
-  normalized.duplicateMarker = normalizeBacklinkDuplicateMarker(obj.duplicateMarker)
-  normalized.trailingLabel = normalizeBacklinkTrailingLabel(obj.trailingLabel)
+  if (obj.duplicateMarker !== undefined) {
+    normalized.duplicateMarker = normalizeBacklinkDuplicateMarker(obj.duplicateMarker)
+  }
+  if (obj.trailingLabel !== undefined) {
+    normalized.trailingLabel = normalizeBacklinkTrailingLabel(obj.trailingLabel)
+  }
   normalized.ariaLabelPrefix = toOptionString(obj.ariaLabelPrefix, normalized.ariaLabelPrefix)
   return normalized
 }
@@ -255,7 +264,7 @@ const normalizeBacklinks = (value) => {
   assertRemovedOptionKeys(obj, REMOVED_BACKLINK_ROOT_OPTION_HINTS, 'backlinks')
   assertAllowedKeys(obj, NOTE_KIND_KEYS, 'backlinks')
   normalized.footnote = normalizeBacklinkKind(obj.footnote, 'backlinks.footnote')
-  normalized.endnote = normalizeBacklinkKind(obj.endnote, 'backlinks.endnote')
+  normalized.endnote = normalizeBacklinkKind(obj.endnote, 'backlinks.endnote', DEFAULT_ENDNOTE_BACKLINK_OVERRIDES)
   return normalized
 }
 
@@ -315,52 +324,52 @@ const buildBacklinkRuntime = (backlinks) => {
 }
 
 const buildSafeOptions = (escapeHtml, options) => {
-  const escapeOption = (value, fallback = '') => escapeHtml(toOptionString(value, fallback))
+  const escapeOption = (value) => escapeHtml(toOptionString(value))
 
   return {
     references: {
       footnote: {
-        prefix: escapeOption(options.references.footnote.prefix, ''),
+        prefix: escapeOption(options.references.footnote.prefix),
         brackets: {
-          open: escapeOption(options.references.footnote.brackets.open, '['),
-          close: escapeOption(options.references.footnote.brackets.close, ']'),
+          open: escapeOption(options.references.footnote.brackets.open),
+          close: escapeOption(options.references.footnote.brackets.close),
         },
       },
       endnote: {
-        prefix: escapeOption(options.references.endnote.prefix, 'E'),
+        prefix: escapeOption(options.references.endnote.prefix),
         brackets: {
-          open: escapeOption(options.references.endnote.brackets.open, '['),
-          close: escapeOption(options.references.endnote.brackets.close, ']'),
+          open: escapeOption(options.references.endnote.brackets.open),
+          close: escapeOption(options.references.endnote.brackets.close),
         },
       },
     },
     backlinks: {
       footnote: {
         brackets: {
-          open: escapeOption(options.backlinks.footnote.brackets.open, '['),
-          close: escapeOption(options.backlinks.footnote.brackets.close, ']'),
+          open: escapeOption(options.backlinks.footnote.brackets.open),
+          close: escapeOption(options.backlinks.footnote.brackets.close),
         },
-        content: escapeOption(options.backlinks.footnote.content, '↩'),
-        ariaLabelPrefix: escapeOption(options.backlinks.footnote.ariaLabelPrefix, DEFAULT_BACKLINK_ARIA_LABEL_PREFIX),
+        content: escapeOption(options.backlinks.footnote.content),
+        ariaLabelPrefix: escapeOption(options.backlinks.footnote.ariaLabelPrefix),
       },
       endnote: {
         brackets: {
-          open: escapeOption(options.backlinks.endnote.brackets.open, '['),
-          close: escapeOption(options.backlinks.endnote.brackets.close, ']'),
+          open: escapeOption(options.backlinks.endnote.brackets.open),
+          close: escapeOption(options.backlinks.endnote.brackets.close),
         },
-        content: escapeOption(options.backlinks.endnote.content, '↩'),
-        ariaLabelPrefix: escapeOption(options.backlinks.endnote.ariaLabelPrefix, DEFAULT_BACKLINK_ARIA_LABEL_PREFIX),
+        content: escapeOption(options.backlinks.endnote.content),
+        ariaLabelPrefix: escapeOption(options.backlinks.endnote.ariaLabelPrefix),
       },
     },
     endnotes: {
       section: {
-        id: escapeOption(options.endnotes.section.id, 'endnotes'),
-        className: escapeOption(options.endnotes.section.className, ''),
-        label: escapeOption(options.endnotes.section.label, 'Notes'),
+        id: escapeOption(options.endnotes.section.id),
+        className: escapeOption(options.endnotes.section.className),
+        label: escapeOption(options.endnotes.section.label),
       },
     },
     duplicates: {
-      message: escapeOption(options.duplicates.message, DEFAULT_DUPLICATE_DEFINITION_MESSAGE),
+      message: escapeOption(options.duplicates.message),
     },
   }
 }

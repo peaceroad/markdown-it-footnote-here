@@ -223,6 +223,20 @@ const runDirectTests = (pass) => {
   }
 
   try {
+    const rendered = createMd({
+      backlinks: {
+        endnote: { content: '↑' },
+      },
+    }).render('A[^en-1][^en-1]\n\n[^en-1]: note\n')
+    assert.ok(rendered.includes('<p><span class="en-label">[E1]</span> note <a href="#en-ref1-a" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1-a">↑<sup>a</sup></a><a href="#en-ref1-b" class="en-backlink" role="doc-backlink" aria-label="Back to reference E1-b">↑<sup>b</sup></a></p>'))
+    console.log('Test: partial-endnote-options-keep-kind-defaults >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: partial-endnote-options-keep-kind-defaults >>> failed')
+    console.log(e.message)
+  }
+
+  try {
     const mdAfterFirst = createMd({
       backlinks: {
         footnote: { position: 'after', duplicates: 'first', trailingLabel: 'marker' },
