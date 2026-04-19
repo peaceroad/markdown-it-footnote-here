@@ -1,0 +1,15 @@
+{
+  "backlinks": {
+    "footnote": {
+      "ariaLabelPrefix": "Back to reference "
+    },
+    "endnote": {
+      "ariaLabelPrefix": "Back to reference "
+    }
+  },
+  "endnotes": {
+    "section": {
+      "label": "Notes"
+    }
+  }
+}

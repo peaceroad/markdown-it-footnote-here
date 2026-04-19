@@ -206,6 +206,133 @@ const runDirectTests = (pass) => {
   }
 
   try {
+    const mdLocalizedFootnote = createMd({
+      backlinks: {
+        footnote: { position: 'after', duplicates: 'first' },
+      },
+    })
+    const rendered = mdLocalizedFootnote.render('P[^1]\n\n[^1]: note\n', { locale: 'ja' })
+    assert.ok(rendered.includes('aria-label="元の参照に戻る 1"'))
+    console.log('Test: locale-ja-footnote-aria-default >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-ja-footnote-aria-default >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const rendered = md.render('A[^en-1]\n\n[^en-1]: note\n', { locale: 'ja' })
+    assert.ok(rendered.includes('<section aria-label="後注" id="endnotes" role="doc-endnotes">'))
+    assert.ok(rendered.includes('aria-label="元の参照に戻る E1">↩</a>'))
+    console.log('Test: locale-ja-endnote-defaults >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-ja-endnote-defaults >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const rendered = md.render('A[^en-1]\n\n[^en-1]: note\n', { preferredLocales: ['ja-JP'] })
+    assert.ok(rendered.includes('<section aria-label="後注" id="endnotes" role="doc-endnotes">'))
+    console.log('Test: locale-preferred-locales-fallback >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-preferred-locales-fallback >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const rendered = md.render('A[^en-1]\n\n[^en-1]: note\n', { preferredLanguages: ['ja'] })
+    assert.ok(rendered.includes('<section aria-label="後注" id="endnotes" role="doc-endnotes">'))
+    console.log('Test: locale-preferred-languages-compat >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-preferred-languages-compat >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const rendered = md.render('A[^en-1]\n\n[^en-1]: note\n', { lang: 'ja' })
+    assert.ok(rendered.includes('<section aria-label="後注" id="endnotes" role="doc-endnotes">'))
+    console.log('Test: locale-lang-compat >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-lang-compat >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const rendered = md.render('A[^en-1]\n\n[^en-1]: note\n', { locale: 'fr' })
+    assert.ok(rendered.includes('<section aria-label="Notes" id="endnotes" role="doc-endnotes">'))
+    assert.ok(rendered.includes('aria-label="Back to reference E1">↩</a>'))
+    console.log('Test: locale-unknown-falls-back-to-en >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-unknown-falls-back-to-en >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const mdLocaleOverride = createMd({
+      backlinks: {
+        endnote: { ariaLabelPrefix: 'Alias ' },
+      },
+      endnotes: {
+        section: {
+          label: 'Custom Notes',
+        },
+      },
+    })
+    const rendered = mdLocaleOverride.render('A[^en-1]\n\n[^en-1]: note\n', { locale: 'ja' })
+    assert.ok(rendered.includes('<section aria-label="Custom Notes" id="endnotes" role="doc-endnotes">'))
+    assert.ok(rendered.includes('aria-label="Alias E1">↩</a>'))
+    assert.ok(!rendered.includes('aria-label="後注"'))
+    assert.ok(!rendered.includes('元の参照に戻る'))
+    console.log('Test: locale-explicit-override-wins >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-explicit-override-wins >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const mdLocaleEmpty = createMd({
+      backlinks: {
+        endnote: { ariaLabelPrefix: '' },
+      },
+      endnotes: {
+        section: {
+          label: '',
+        },
+      },
+    })
+    const rendered = mdLocaleEmpty.render('A[^en-1]\n\n[^en-1]: note\n', { locale: 'ja' })
+    assert.ok(rendered.includes('<section id="endnotes" role="doc-endnotes">'))
+    assert.ok(!rendered.includes('aria-label="元の参照に戻る'))
+    assert.ok(!rendered.includes('aria-label="後注"'))
+    console.log('Test: locale-explicit-empty-disables-auto >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-explicit-empty-disables-auto >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const env = { locale: 'ja' }
+    const renderedJa = md.render('A[^en-1]\n\n[^en-1]: note\n', env)
+    env.locale = 'en-US'
+    const renderedEn = md.render('A[^en-1]\n\n[^en-1]: note\n', env)
+    assert.ok(renderedJa.includes('aria-label="後注"'))
+    assert.ok(renderedEn.includes('aria-label="Notes"'))
+    assert.ok(!renderedEn.includes('aria-label="後注"'))
+    console.log('Test: locale-per-render-switch >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: locale-per-render-switch >>> failed')
+    console.log(e.message)
+  }
+
+  try {
     const mdPerKindBacklinks = createMd({
       backlinks: {
         footnote: { position: 'after', duplicates: 'all', content: '↩', trailingLabel: 'marker', ariaLabelPrefix: 'Back to footnote reference ' },

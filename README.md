@@ -91,7 +91,7 @@ npm install @peaceroad/markdown-it-footnote-here
   - `footnote.content` / `endnote.content`: trailing backlink content. Default: `'↩'`.
   - `footnote.duplicateMarker` / `endnote.duplicateMarker`: visible duplicate suffix style, `'alpha' | 'numeric'` (default: `'alpha'`).
   - `footnote.trailingLabel` / `endnote.trailingLabel`: whether trailing backlinks render a visible duplicate suffix marker, `'none' | 'marker'` (defaults: footnotes `'none'`, endnotes `'marker'`).
-  - `footnote.ariaLabelPrefix` / `endnote.ariaLabelPrefix`: prefix for trailing backlink `aria-label` values (default: `'Back to reference '`).
+  - `footnote.ariaLabelPrefix` / `endnote.ariaLabelPrefix`: prefix for trailing backlink `aria-label` values. Default: locale-aware auto. Built-in defaults are English `'Back to reference '` and Japanese `'元の参照に戻る '`.
   - Note: when `position` includes `before` and `duplicates` is `all`, duplicate references and leading backlinks use visible suffixes such as `a`, `b`, `c` (or `1`, `2`, `3` when `duplicateMarker: 'numeric'`).
   - Note: default endnotes use trailing backlinks with visible suffix markers, so repeated endnote references render return links such as `↩a`, `↩b`, `↩c`.
   - Note: `position: 'none'` still renders a non-link note label so the note number remains visible.
@@ -99,7 +99,7 @@ npm install @peaceroad/markdown-it-footnote-here
   - `prefix`: prefix that marks a note as an endnote (default: `'en-'`). When empty, endnotes are disabled.
   - `section.id`: `id` attribute for the endnotes section wrapper; omitted when empty (default: `'endnotes'`).
   - `section.className`: `class` attribute for the endnotes section wrapper; omitted when empty (default: `''`).
-  - `section.label`: used as `aria-label` when `section.useHeading` is `false`; used as heading text when `section.useHeading` is `true` (default: `'Notes'`).
+  - `section.label`: used as `aria-label` when `section.useHeading` is `false`; used as heading text when `section.useHeading` is `true`. Default: locale-aware auto. Built-in defaults are English `'Notes'` and Japanese `'後注'`.
   - `section.useHeading`: if `true`, render a heading tag and omit `aria-label`. If `false` (default), omit the heading and set `aria-label` when provided.
   - `section.headingLevel`: heading level used when `section.useHeading` is `true`, limited to `1..6` (default: `2`).
 - `duplicates` (object): controls duplicate note-definition handling.
@@ -138,6 +138,9 @@ const md = mdit().use(mditFootnoteHere, {
 
 - Diagnostics: when duplicates are detected under `duplicates.policy: 'warn'`, details are collected in `env.footnoteHereDiagnostics.duplicateDefinitions`.
 - Security note: option strings used in HTML output are escaped before rendering (labels, aria/id/class values, heading text, backlink content/message).
+- Locale note: when `backlinks.<kind>.ariaLabelPrefix` or `endnotes.section.label` is `null` or `undefined`, the plugin uses built-in locale-aware defaults based on `env.locale`, `env.preferredLocales[0]`, compatibility fallbacks `env.lang`, `env.language`, `env.preferredLanguage`, `env.preferredLanguages[0]`, then English as the final fallback.
+- Locale note: localized defaults are resolved during the full markdown-it parse/core pass. If the locale changes, call `md.render(src, env)` again or re-parse the source; `renderer.render(existingTokens, ...)` does not retroactively rewrite localized HTML tokens that were already generated during core transforms.
+- Locale note: explicit strings always win over locale-aware defaults. Use `''` to disable the built-in default text instead of inheriting it.
 - Unreferenced note-definition note: when a note definition has no matching reference, the note still renders its visible label, but backlink anchors are omitted so broken `href` targets are not emitted.
 - `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.
 - Reused-render note: repeated renders are stable because duplicate-reference suffixes are fixed during parse, and changing `env.docId` on a reused `env` object updates generated ids consistently.

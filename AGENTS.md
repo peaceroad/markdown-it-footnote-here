@@ -12,6 +12,7 @@ This document captures the current implementation workflow, especially around fo
   - Endnote handling: labels starting with `endnotes.prefix` (default `en-`) are endnotes; DOM ids/classes still use fixed `en`.
   - Duplicate definition handling: `duplicates.policy` (`warn|ignore|strict`), diagnostics in `env.footnoteHereDiagnostics.duplicateDefinitions`, optional style injection via `duplicates.injectStyle`.
   - Security: option strings are escaped before HTML output via `safeOptions`.
+  - Locale-aware defaults: `backlinks.<kind>.ariaLabelPrefix` and `endnotes.section.label` use built-in localized defaults when their normalized option value is `null`; locale resolution reads `env.locale`, `env.preferredLocales`, compatibility fallbacks (`env.lang`, `env.language`, `env.preferredLanguage`, `env.preferredLanguages`), then falls back to English.
   - `env.docId` is URL-encoded and consistently applied to note/ref ids; cached encoding must track `env.docId` changes on reused env objects.
   - Long-lived helper caches (`docId` memo, suffix tables) live in the plugin-instance closure, not module-global state.
 
@@ -24,12 +25,13 @@ This document captures the current implementation workflow, especially around fo
    - On duplicate labels, behavior depends on `duplicates.policy`.
    - `footnote_ref` resolves references from `env.footnotes` / `env.endnotes` and tags tokens with `isEndnote` plus a stable per-note reference ordinal for duplicate-marker rendering.
 4) Rendering flow:
+   - `footnote_locale_runtime` resolves locale-aware defaults once per full parse/core pass and stores the resolved localized strings on `env` for later core transforms.
    - `footnote_anchor` injects leading labels/backlinks into note content.
    - If a note starts with a non-paragraph block, `footnote_anchor` inserts a standalone leading `<p>` for the note label/backlink.
-   - `createAfterBackLinkToken` injects trailing backlinks only when `backlinks.<kind>.position` includes `after`.
+   - `createAfterBackLinkToken` injects trailing backlinks only when `backlinks.<kind>.position` includes `after`, and uses the per-render localized `aria-label` prefix unless an explicit option string overrides it.
    - If a note ends with a non-paragraph block, trailing backlinks are emitted in a standalone trailing `<p>` so they stay at the end of the note.
    - `footnote_error_style` injects one `<style>` block only when enabled and duplicates exist.
-   - `endnotes_move` removes endnote blocks from inline positions and appends a `<section>` (attributes ordered aria-label -> id -> class -> role).
+   - `endnotes_move` removes endnote blocks from inline positions and appends a `<section>` (attributes ordered aria-label -> id -> class -> role), using the localized section label unless an explicit option string overrides it.
 5) When adding options:
    - Update `README.md` and add fixtures under `test/`.
    - Extend `test/test.js` to load the new fixtures.
@@ -61,6 +63,8 @@ This document captures the current implementation workflow, especially around fo
 - `endnotes.prefix` disables endnotes when empty.
 - `endnotes.section.useHeading` true: render `<h{headingLevel}>` with `endnotes.section.label`; false: use `aria-label` without heading.
 - `endnotes.section.headingLevel` is normalized to an integer in `1..6` and defaults to `2`.
+- `backlinks.<kind>.ariaLabelPrefix` and `endnotes.section.label` accept explicit strings. `null` / `undefined` means locale-aware auto, while `''` is an explicit empty override.
+- Locale-aware defaults are part of the parse/core pipeline contract. If locale changes, run `md.render(src, env)` again or re-parse the source; `renderer.render(existingTokens, ...)` does not rewrite localized HTML that was already baked into tokens.
 - Duplicate markers are always applied to ref/backlink ids when a note is referenced multiple times; visible suffixes are only added where the active backlink mode requires them.
 - Notes with `position: 'after'` or `position: 'none'` still render a leading non-link label span so the note number remains visible.
 - Unreferenced note definitions still render their visible label, but backlink anchors are omitted so the plugin does not emit broken `href` targets.

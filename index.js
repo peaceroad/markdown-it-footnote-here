@@ -1,8 +1,10 @@
+import { getLocaleMessages, resolveLocaleFromEnv } from './locales/index.js'
+
 const ENDNOTE_DOM_PREFIX = 'en'
 const FOOTNOTE_DOM_PREFIX = 'fn'
 const DEFAULT_DUPLICATE_DEFINITION_MESSAGE = '[Duplicate footnote label detected. Using the first definition.]'
-const DEFAULT_BACKLINK_ARIA_LABEL_PREFIX = 'Back to reference '
 const ERROR_STYLE_CONTENT = '<style>\n:root {\n  --footnote-error-text: #b42318;\n}\n@media (prefers-color-scheme: dark) {\n  :root {\n    --footnote-error-text: #fca5a5;\n  }\n}\n.footnote-error-message {\n  color: var(--footnote-error-text);\n  font-weight: 600;\n  margin-right: 0.35em;\n}\n.footnote-error-backlink {\n  color: var(--footnote-error-text);\n  position: relative;\n}\n.footnote-error-backlink::before {\n  content: "";\n  position: absolute;\n  left: -0.35em;\n  top: 0.08em;\n  bottom: 0.08em;\n  width: 2px;\n  background: var(--footnote-error-text);\n  border-radius: 1px;\n}\n@media (forced-colors: active) {\n  .footnote-error-message,\n  .footnote-error-backlink {\n    color: CanvasText;\n  }\n  .footnote-error-backlink::before {\n    background: CanvasText;\n  }\n}\n</style>\n'
+const LOCALE_RUNTIME_ENV_KEY = '__footnoteHereLocaleRuntime'
 const ROOT_OPTION_KEYS = new Set(['references', 'backlinks', 'endnotes', 'duplicates'])
 const NOTE_KIND_KEYS = new Set(['footnote', 'endnote'])
 const REFERENCE_KIND_KEYS = new Set(['prefix', 'brackets', 'wrapInSup'])
@@ -71,9 +73,16 @@ const ensureNotesEnv = (env, key) => {
 }
 
 const isObjectRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value)
+const hasOwn = (obj, key) => !!obj && Object.prototype.hasOwnProperty.call(obj, key)
 
 const toOptionString = (value, fallback = '') => {
   if (value === null || value === undefined) return fallback
+  return String(value)
+}
+
+const toLocaleAwareOptionString = (value, fallback = null) => {
+  if (value === undefined) return fallback
+  if (value === null) return null
   return String(value)
 }
 
@@ -95,7 +104,7 @@ const createDefaultBacklinkKind = (overrides) => ({
   content: '↩',
   duplicateMarker: 'alpha',
   trailingLabel: 'none',
-  ariaLabelPrefix: DEFAULT_BACKLINK_ARIA_LABEL_PREFIX,
+  ariaLabelPrefix: null,
   ...overrides,
 })
 
@@ -114,7 +123,7 @@ const createDefaultEndnotes = () => ({
   section: {
     id: 'endnotes',
     className: '',
-    label: 'Notes',
+    label: null,
     useHeading: false,
     headingLevel: 2,
   },
@@ -243,7 +252,9 @@ const normalizeBacklinkKind = (value, path, overrides) => {
   if (obj.trailingLabel !== undefined) {
     normalized.trailingLabel = normalizeBacklinkTrailingLabel(obj.trailingLabel)
   }
-  normalized.ariaLabelPrefix = toOptionString(obj.ariaLabelPrefix, normalized.ariaLabelPrefix)
+  if (hasOwn(obj, 'ariaLabelPrefix')) {
+    normalized.ariaLabelPrefix = toLocaleAwareOptionString(obj.ariaLabelPrefix, normalized.ariaLabelPrefix)
+  }
   return normalized
 }
 
@@ -279,7 +290,9 @@ const normalizeEndnotes = (value) => {
     assertAllowedKeys(section, ENDNOTE_SECTION_KEYS, 'endnotes.section')
     normalized.section.id = toOptionString(section.id, normalized.section.id)
     normalized.section.className = toOptionString(section.className, normalized.section.className)
-    normalized.section.label = toOptionString(section.label, normalized.section.label)
+    if (hasOwn(section, 'label')) {
+      normalized.section.label = toLocaleAwareOptionString(section.label, normalized.section.label)
+    }
     normalized.section.useHeading = normalizeBoolean(section.useHeading, normalized.section.useHeading)
     if (section.headingLevel !== undefined) {
       normalized.section.headingLevel = normalizeHeadingLevel(section.headingLevel)
@@ -325,6 +338,7 @@ const buildBacklinkRuntime = (backlinks) => {
 
 const buildSafeOptions = (escapeHtml, options) => {
   const escapeOption = (value) => escapeHtml(toOptionString(value))
+  const escapeLocaleAwareOption = (value) => value === null ? null : escapeHtml(toOptionString(value))
 
   return {
     references: {
@@ -350,7 +364,7 @@ const buildSafeOptions = (escapeHtml, options) => {
           close: escapeOption(options.backlinks.footnote.brackets.close),
         },
         content: escapeOption(options.backlinks.footnote.content),
-        ariaLabelPrefix: escapeOption(options.backlinks.footnote.ariaLabelPrefix),
+        ariaLabelPrefix: escapeLocaleAwareOption(options.backlinks.footnote.ariaLabelPrefix),
       },
       endnote: {
         brackets: {
@@ -358,14 +372,14 @@ const buildSafeOptions = (escapeHtml, options) => {
           close: escapeOption(options.backlinks.endnote.brackets.close),
         },
         content: escapeOption(options.backlinks.endnote.content),
-        ariaLabelPrefix: escapeOption(options.backlinks.endnote.ariaLabelPrefix),
+        ariaLabelPrefix: escapeLocaleAwareOption(options.backlinks.endnote.ariaLabelPrefix),
       },
     },
     endnotes: {
       section: {
         id: escapeOption(options.endnotes.section.id),
         className: escapeOption(options.endnotes.section.className),
-        label: escapeOption(options.endnotes.section.label),
+        label: escapeLocaleAwareOption(options.endnotes.section.label),
       },
     },
     duplicates: {
@@ -399,7 +413,6 @@ const buildKindRuntime = (kindName, options, safeOptions) => {
     backlinkLabelOpen: safeBacklinks.brackets.open,
     backlinkLabelClose: safeBacklinks.brackets.close,
     backlinkContent: safeBacklinks.content,
-    backlinkAriaLabelPrefix: safeBacklinks.ariaLabelPrefix,
     duplicateMarkerIsNumeric: backlinks.duplicateMarker === 'numeric',
     showTrailingBacklinkMarker: backlinks.trailingLabel === 'marker',
     ...backlinkRuntime,
@@ -512,11 +525,13 @@ const render_footnote_anchor = (tokens, idx, env, getDocIdPart, formatRefSuffix,
   return link
 }
 
-const createAfterBackLinkToken = (state, count, n, kind, hasDuplicate, getDocIdPart, formatRefSuffix) => {
+const createAfterBackLinkToken = (state, count, n, kind, hasDuplicate, getDocIdPart, formatRefSuffix, getLocaleRuntime) => {
   if (count <= 0) return null
   const refIdBase = getRefIdBase(kind.noteDomPrefix, getDocIdPart(state.env))
   const backlinkClass = hasDuplicate ? kind.noteBacklinkErrorClass : kind.noteBacklinkClass
   const showAll = count > 1 && kind.showAllBacklinks
+  const localeRuntime = getLocaleRuntime(state.env)
+  const backlinkAriaLabelPrefix = localeRuntime.backlinks[kind.isEndnote ? 'endnote' : 'footnote'].ariaLabelPrefix
   let html = ''
 
   if (showAll) {
@@ -524,8 +539,8 @@ const createAfterBackLinkToken = (state, count, n, kind, hasDuplicate, getDocIdP
       const suffixChar = formatRefSuffix(i, kind.duplicateMarkerIsNumeric)
       const suffix = '-' + suffixChar
       html += `<a href="#${refIdBase}${n}${suffix}" class="${backlinkClass}" role="doc-backlink"`
-      if (kind.backlinkAriaLabelPrefix) {
-        html += ` aria-label="${kind.backlinkAriaLabelPrefix}${kind.referencePrefix}${n}${suffix}"`
+      if (backlinkAriaLabelPrefix) {
+        html += ` aria-label="${backlinkAriaLabelPrefix}${kind.referencePrefix}${n}${suffix}"`
       }
       html += `>${kind.backlinkContent}`
       if (kind.showTrailingBacklinkMarker) {
@@ -536,8 +551,8 @@ const createAfterBackLinkToken = (state, count, n, kind, hasDuplicate, getDocIdP
   } else {
     const suffix = count > 1 ? '-' + formatRefSuffix(1, kind.duplicateMarkerIsNumeric) : ''
     html += `<a href="#${refIdBase}${n}${suffix}" class="${backlinkClass}" role="doc-backlink"`
-    if (kind.backlinkAriaLabelPrefix) {
-      html += ` aria-label="${kind.backlinkAriaLabelPrefix}${kind.referencePrefix}${n}"`
+    if (backlinkAriaLabelPrefix) {
+      html += ` aria-label="${backlinkAriaLabelPrefix}${kind.referencePrefix}${n}"`
     }
     html += `>${kind.backlinkContent}</a>`
   }
@@ -640,6 +655,51 @@ const footnote_plugin = (md, option) => {
     return value
   }
 
+  const createLocaleRuntime = (locale) => {
+    const localeMessages = getLocaleMessages(locale)
+    const localeBacklinkAriaLabelPrefixFootnote = md.utils.escapeHtml(toOptionString(localeMessages?.backlinks?.footnote?.ariaLabelPrefix))
+    const localeBacklinkAriaLabelPrefixEndnote = md.utils.escapeHtml(toOptionString(localeMessages?.backlinks?.endnote?.ariaLabelPrefix))
+    const localeEndnotesSectionLabel = md.utils.escapeHtml(toOptionString(localeMessages?.endnotes?.section?.label))
+    return {
+      locale,
+      backlinks: {
+        footnote: {
+          ariaLabelPrefix: safeOptions.backlinks.footnote.ariaLabelPrefix === null
+            ? localeBacklinkAriaLabelPrefixFootnote
+            : safeOptions.backlinks.footnote.ariaLabelPrefix,
+        },
+        endnote: {
+          ariaLabelPrefix: safeOptions.backlinks.endnote.ariaLabelPrefix === null
+            ? localeBacklinkAriaLabelPrefixEndnote
+            : safeOptions.backlinks.endnote.ariaLabelPrefix,
+        },
+      },
+      endnotes: {
+        section: {
+          label: safeEndnotesSection.label === null
+            ? localeEndnotesSectionLabel
+            : safeEndnotesSection.label,
+        },
+      },
+    }
+  }
+
+  const resolveLocaleRuntime = (env) => createLocaleRuntime(resolveLocaleFromEnv(env))
+
+  const getLocaleRuntime = (env) => {
+    const locale = resolveLocaleFromEnv(env)
+    if (env && typeof env === 'object') {
+      const cached = env[LOCALE_RUNTIME_ENV_KEY]
+      if (cached && cached.locale === locale) {
+        return cached
+      }
+      const runtime = createLocaleRuntime(locale)
+      env[LOCALE_RUNTIME_ENV_KEY] = runtime
+      return runtime
+    }
+    return createLocaleRuntime(locale)
+  }
+
   const isSpace = md.utils.isSpace
 
   md.renderer.rules.footnote_ref = (tokens, idx, _options, env) => render_footnote_ref(tokens, idx, env, getDocIdPart, formatRefSuffix, kinds)
@@ -657,6 +717,12 @@ const footnote_plugin = (md, option) => {
     if (state.env.footnotes) delete state.env.footnotes
     if (state.env.endnotes) delete state.env.endnotes
     if (state.env.footnoteHereDiagnostics) delete state.env.footnoteHereDiagnostics
+    if (state.env[LOCALE_RUNTIME_ENV_KEY]) delete state.env[LOCALE_RUNTIME_ENV_KEY]
+  }
+
+  const footnote_locale_runtime = (state) => {
+    const env = state.env || (state.env = {})
+    env[LOCALE_RUNTIME_ENV_KEY] = resolveLocaleRuntime(env)
   }
 
   const registerDuplicateDefinition = (state, notes, id, label, isEndnote, line) => {
@@ -914,7 +980,8 @@ const footnote_plugin = (md, option) => {
           kind,
           duplicateDef,
           getDocIdPart,
-          formatRefSuffix
+          formatRefSuffix,
+          getLocaleRuntime
         )
 
         if (trailingAnchor) {
@@ -990,16 +1057,18 @@ const footnote_plugin = (md, option) => {
     if (endnoteTokens.length === 0) return
 
     const sectionOpen = new state.Token('html_block', '', 0)
+    const localeRuntime = getLocaleRuntime(state.env)
+    const endnotesSectionLabel = localeRuntime.endnotes.section.label
     const attrs = []
-    if (!endnotesSection.useHeading && endnotesSection.label) {
-      attrs.push(`aria-label="${safeEndnotesSection.label}"`)
+    if (!endnotesSection.useHeading && endnotesSectionLabel) {
+      attrs.push(`aria-label="${endnotesSectionLabel}"`)
     }
     if (endnotesSection.id) attrs.push(`id="${safeEndnotesSection.id}"`)
     if (endnotesSection.className) attrs.push(`class="${safeEndnotesSection.className}"`)
     attrs.push('role="doc-endnotes"')
     let sectionContent = `<section ${attrs.join(' ')}>\n`
-    if (endnotesSection.useHeading && endnotesSection.label) {
-      sectionContent += `<${endnotesHeadingTag}>${safeEndnotesSection.label}</${endnotesHeadingTag}>\n`
+    if (endnotesSection.useHeading && endnotesSectionLabel) {
+      sectionContent += `<${endnotesHeadingTag}>${endnotesSectionLabel}</${endnotesHeadingTag}>\n`
     }
     sectionContent += '<ol>\n'
     sectionOpen.content = sectionContent
@@ -1016,7 +1085,8 @@ const footnote_plugin = (md, option) => {
   md.core.ruler.before('block', 'footnote_reset', footnote_reset)
   md.block.ruler.before('reference', 'footnote_def', footnote_def, { alt: [ 'paragraph', 'reference' ] })
   md.inline.ruler.after('image', 'footnote_ref', footnote_ref)
-  md.core.ruler.after('inline', 'footnote_anchor', footnote_anchor)
+  md.core.ruler.after('inline', 'footnote_locale_runtime', footnote_locale_runtime)
+  md.core.ruler.after('footnote_locale_runtime', 'footnote_anchor', footnote_anchor)
   md.core.ruler.after('footnote_anchor', 'footnote_error_style', inject_error_style)
   md.core.ruler.after('footnote_error_style', 'endnotes_move', move_endnotes_to_section)
 }
