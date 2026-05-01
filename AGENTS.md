@@ -25,7 +25,7 @@ This document captures the current implementation workflow, especially around fo
    - On duplicate labels, behavior depends on `duplicates.policy`.
    - `footnote_ref` resolves references from `env.footnotes` / `env.endnotes` and tags tokens with `isEndnote` plus a stable per-note reference ordinal for duplicate-marker rendering.
 4) Rendering flow:
-   - `footnote_locale_runtime` resolves locale-aware defaults once per full parse/core pass and stores the resolved localized strings on `env` for later core transforms.
+   - Locale-aware defaults are resolved lazily during core transforms and cached on `env` for the rest of that parse/core pass.
    - `footnote_anchor` injects leading labels/backlinks into note content.
    - If a note starts with a non-paragraph block, `footnote_anchor` inserts a standalone leading `<p>` for the note label/backlink.
    - `createAfterBackLinkToken` injects trailing backlinks only when `backlinks.<kind>.position` includes `after`, and uses the per-render localized `aria-label` prefix unless an explicit option string overrides it.

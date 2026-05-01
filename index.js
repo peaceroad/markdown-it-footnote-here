@@ -684,19 +684,16 @@ const footnote_plugin = (md, option) => {
     }
   }
 
-  const resolveLocaleRuntime = (env) => createLocaleRuntime(resolveLocaleFromEnv(env))
-
   const getLocaleRuntime = (env) => {
-    const locale = resolveLocaleFromEnv(env)
     if (env && typeof env === 'object') {
       const cached = env[LOCALE_RUNTIME_ENV_KEY]
-      if (cached && cached.locale === locale) {
-        return cached
-      }
+      if (cached) return cached
+      const locale = resolveLocaleFromEnv(env)
       const runtime = createLocaleRuntime(locale)
       env[LOCALE_RUNTIME_ENV_KEY] = runtime
       return runtime
     }
+    const locale = resolveLocaleFromEnv(env)
     return createLocaleRuntime(locale)
   }
 
@@ -718,11 +715,6 @@ const footnote_plugin = (md, option) => {
     if (state.env.endnotes) delete state.env.endnotes
     if (state.env.footnoteHereDiagnostics) delete state.env.footnoteHereDiagnostics
     if (state.env[LOCALE_RUNTIME_ENV_KEY]) delete state.env[LOCALE_RUNTIME_ENV_KEY]
-  }
-
-  const footnote_locale_runtime = (state) => {
-    const env = state.env || (state.env = {})
-    env[LOCALE_RUNTIME_ENV_KEY] = resolveLocaleRuntime(env)
   }
 
   const registerDuplicateDefinition = (state, notes, id, label, isEndnote, line) => {
@@ -1085,8 +1077,7 @@ const footnote_plugin = (md, option) => {
   md.core.ruler.before('block', 'footnote_reset', footnote_reset)
   md.block.ruler.before('reference', 'footnote_def', footnote_def, { alt: [ 'paragraph', 'reference' ] })
   md.inline.ruler.after('image', 'footnote_ref', footnote_ref)
-  md.core.ruler.after('inline', 'footnote_locale_runtime', footnote_locale_runtime)
-  md.core.ruler.after('footnote_locale_runtime', 'footnote_anchor', footnote_anchor)
+  md.core.ruler.after('inline', 'footnote_anchor', footnote_anchor)
   md.core.ruler.after('footnote_anchor', 'footnote_error_style', inject_error_style)
   md.core.ruler.after('footnote_error_style', 'endnotes_move', move_endnotes_to_section)
 }
