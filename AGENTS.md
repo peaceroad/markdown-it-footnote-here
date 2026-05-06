@@ -5,7 +5,7 @@ This document captures the current implementation workflow, especially around fo
 ## Code overview
 - `index.js`:
   - Rendering helpers: `render_footnote_ref`, `render_footnote_open/close`, `render_footnote_anchor`, and `createAfterBackLinkToken`.
-  - Renderer compatibility: `footnote_open` still resolves ids via renderer rule `footnote_anchor_name`, so custom renderer overrides keep working.
+  - Renderer compatibility: `footnote_ref` and `footnote_open` resolve note target ids via renderer rule `footnote_anchor_name`, so custom renderer overrides keep reference `href` values aligned with rendered note ids.
   - Parsing: custom block rule `footnote_def`, inline rule `footnote_ref`, core rule `footnote_anchor`, style injection rule `footnote_error_style`, and `endnotes_move` to append endnotes at the end.
   - Options are normalized into four groups: `references`, `backlinks`, `endnotes`, and `duplicates`.
   - Runtime note config is precomputed per kind (`footnote`, `endnote`) so renderer/core hot paths only read finished kind configs.
@@ -15,6 +15,7 @@ This document captures the current implementation workflow, especially around fo
   - Locale-aware defaults: `backlinks.<kind>.ariaLabelPrefix` and `endnotes.section.label` use built-in localized defaults when their normalized option value is `null`; locale resolution reads `env.locale`, `env.preferredLocales`, compatibility fallbacks (`env.lang`, `env.language`, `env.preferredLanguage`, `env.preferredLanguages`), then falls back to English.
   - `env.docId` is URL-encoded and consistently applied to note/ref ids; cached encoding must track `env.docId` changes on reused env objects.
   - Long-lived helper caches (`docId` memo, suffix tables) live in the plugin-instance closure, not module-global state.
+  - Applying the plugin twice to the same markdown-it instance is unsupported and fails fast; use a fresh markdown-it instance for a different option set.
 
 ## Adding features / making changes
 1) Review normalized options and runtime builders in `index.js`.
@@ -76,3 +77,5 @@ This document captures the current implementation workflow, especially around fo
 - `duplicates.policy` has no callback hook yet; diagnostics are available at `env.footnoteHereDiagnostics.duplicateDefinitions` when policy is `warn`.
 - `docId` encoding cache must invalidate when `env.docId` changes on a reused `env` object.
 - Renderer rules should tolerate missing `env` (for example, inline-only renders) and treat missing notes as empty to avoid crashes.
+- `footnote_anchor_name` overrides must keep note reference `href` and note container `id` aligned; add regression tests when touching note-id generation.
+- Do not register the plugin twice on the same markdown-it instance; setup should throw before duplicate block/inline/core rules can be added.

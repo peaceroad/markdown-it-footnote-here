@@ -649,6 +649,34 @@ const runDirectTests = (pass) => {
   }
 
   try {
+    const mdCustomAnchorName = createMd()
+    mdCustomAnchorName.renderer.rules.footnote_anchor_name = (tokens, idx) => `-custom-${tokens[idx].meta.id + 1}`
+    const rendered = mdCustomAnchorName.render('A[^1] B[^en-1]\n\n[^1]: foot\n[^en-1]: end\n')
+    assert.ok(rendered.includes('href="#fn-custom-1"'))
+    assert.ok(rendered.includes('<aside id="fn-custom-1"'))
+    assert.ok(rendered.includes('href="#en-custom-1"'))
+    assert.ok(rendered.includes('<li id="en-custom-1">'))
+    console.log('Test: custom-anchor-name-links-match >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: custom-anchor-name-links-match >>> failed')
+    console.log(e.message)
+  }
+
+  try {
+    const mdDoubleUse = mdit().use(footnotes)
+    assert.throws(
+      () => mdDoubleUse.use(footnotes),
+      /Plugin is already installed/
+    )
+    console.log('Test: duplicate-use-fails-fast >>>')
+  } catch (e) {
+    pass = false
+    console.log('Test: duplicate-use-fails-fast >>> failed')
+    console.log(e.message)
+  }
+
+  try {
     const rendered = md.render('A[^1]\n\n[^1]:\n    - one\n    - two\n')
     assert.ok(rendered.includes('<p><a href="#fn-ref1" class="fn-backlink" role="doc-backlink">[1]</a></p>\n<ul>'))
     console.log('Test: list-leading-label-paragraph >>>')

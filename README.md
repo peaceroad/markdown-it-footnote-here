@@ -144,4 +144,6 @@ const md = mdit().use(mditFootnoteHere, {
 - Unreferenced note-definition note: when a note definition has no matching reference, the note still renders its visible label, but backlink anchors are omitted so broken `href` targets are not emitted.
 - `env.docId` note: if provided, it is URL-encoded and applied consistently to note/ref ids to keep links valid and safe.
 - Reused-render note: repeated renders are stable because duplicate-reference suffixes are fixed during parse, and changing `env.docId` on a reused `env` object updates generated ids consistently.
+- Renderer note: `footnote_ref` and `footnote_open` both resolve note target ids through renderer rule `footnote_anchor_name`, so custom note-anchor-name overrides keep reference `href` values and rendered note ids aligned.
 - Renderer note: hosts may call render paths without a populated `env` (for example, inline-only renders). In that case, references render without count-based suffixes; pass a shared `env` during parse+render to keep counts consistent.
+- Installation note: applying this plugin more than once to the same markdown-it instance is not supported and throws at setup time. Create a separate markdown-it instance for a different option set.

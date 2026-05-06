@@ -3,6 +3,7 @@ import { getLocaleMessages, resolveLocaleFromEnv } from './locales/index.js'
 const ENDNOTE_DOM_PREFIX = 'en'
 const FOOTNOTE_DOM_PREFIX = 'fn'
 const DEFAULT_DUPLICATE_DEFINITION_MESSAGE = '[Duplicate footnote label detected. Using the first definition.]'
+const PLUGIN_SENTINEL = Symbol.for('@peaceroad/markdown-it-footnote-here/installed')
 const ERROR_STYLE_CONTENT = '<style>\n:root {\n  --footnote-error-text: #b42318;\n}\n@media (prefers-color-scheme: dark) {\n  :root {\n    --footnote-error-text: #fca5a5;\n  }\n}\n.footnote-error-message {\n  color: var(--footnote-error-text);\n  font-weight: 600;\n  margin-right: 0.35em;\n}\n.footnote-error-backlink {\n  color: var(--footnote-error-text);\n  position: relative;\n}\n.footnote-error-backlink::before {\n  content: "";\n  position: absolute;\n  left: -0.35em;\n  top: 0.08em;\n  bottom: 0.08em;\n  width: 2px;\n  background: var(--footnote-error-text);\n  border-radius: 1px;\n}\n@media (forced-colors: active) {\n  .footnote-error-message,\n  .footnote-error-backlink {\n    color: CanvasText;\n  }\n  .footnote-error-backlink::before {\n    background: CanvasText;\n  }\n}\n</style>\n'
 const LOCALE_RUNTIME_ENV_KEY = '__footnoteHereLocaleRuntime'
 const ROOT_OPTION_KEYS = new Set(['references', 'backlinks', 'endnotes', 'duplicates'])
@@ -58,6 +59,14 @@ const getRefIdBase = (noteDomPrefix, docIdPart) => {
 const render_footnote_anchor_name = (tokens, idx, env, getDocIdPart) => {
   const n = tokens[idx].meta.id + 1
   return getDocIdPart(env) + n
+}
+
+const renderAnchorName = (tokens, idx, env, slf, getDocIdPart) => {
+  const rule = slf && slf.rules && slf.rules.footnote_anchor_name
+  if (typeof rule === 'function') {
+    return rule(tokens, idx, null, env, slf)
+  }
+  return render_footnote_anchor_name(tokens, idx, env, getDocIdPart)
 }
 
 const isEndnoteLabel = (label, endnotesPrefix) => {
@@ -439,14 +448,14 @@ const createSpaceToken = (state, level) => {
   return token
 }
 
-const render_footnote_ref = (tokens, idx, env, getDocIdPart, formatRefSuffix, kinds) => {
+const render_footnote_ref = (tokens, idx, env, slf, getDocIdPart, formatRefSuffix, kinds) => {
   const token = tokens[idx]
   const kind = getKindRuntime(kinds, token.meta.isEndnote)
   const id = token.meta.id
   const n = id + 1
   const notes = env && env[kind.notesEnvKey]
   const docIdPart = getDocIdPart(env)
-  const noteIdBase = `${kind.noteDomPrefix}${docIdPart}`
+  const noteAnchorName = renderAnchorName(tokens, idx, env, slf, getDocIdPart)
   const refIdBase = getRefIdBase(kind.noteDomPrefix, docIdPart)
   const totalCounts = notes && notes.totalCounts ? notes.totalCounts[id] || 0 : 0
   let suffix = ''
@@ -458,7 +467,7 @@ const render_footnote_ref = (tokens, idx, env, getDocIdPart, formatRefSuffix, ki
       label = `${kind.referenceLabelOpen}${kind.referencePrefix}${n}${suffix}${kind.referenceLabelClose}`
     }
   }
-  let refHtml = `<a href="#${noteIdBase}${n}" id="${refIdBase}${n}${suffix}" class="${kind.noteRefClass}" role="doc-noteref">${label}</a>`
+  let refHtml = `<a href="#${kind.noteDomPrefix}${noteAnchorName}" id="${refIdBase}${n}${suffix}" class="${kind.noteRefClass}" role="doc-noteref">${label}</a>`
   if (kind.wrapReferenceInSup) {
     refHtml = `<sup class="${kind.noteRefWrapperClass}">${refHtml}</sup>`
   }
@@ -602,7 +611,11 @@ const createInlineParagraphTokens = (state, paragraphLevel, map, children) => {
 }
 
 const footnote_plugin = (md, option) => {
+  if (md[PLUGIN_SENTINEL]) {
+    throw new Error('[markdown-it-footnote-here] Plugin is already installed on this markdown-it instance. Create a new markdown-it instance for different options.')
+  }
   const options = normalizeOptions(option)
+  Object.defineProperty(md, PLUGIN_SENTINEL, { value: true })
   const safeOptions = buildSafeOptions(md.utils.escapeHtml, options)
   const duplicateMessageHtml = `<span class="footnote-error-message">${safeOptions.duplicates.message}</span>`
   const kinds = {
@@ -699,7 +712,7 @@ const footnote_plugin = (md, option) => {
 
   const isSpace = md.utils.isSpace
 
-  md.renderer.rules.footnote_ref = (tokens, idx, _options, env) => render_footnote_ref(tokens, idx, env, getDocIdPart, formatRefSuffix, kinds)
+  md.renderer.rules.footnote_ref = (tokens, idx, _options, env, slf) => render_footnote_ref(tokens, idx, env, slf, getDocIdPart, formatRefSuffix, kinds)
   md.renderer.rules.footnote_open = (tokens, idx, _options, env, slf) => render_footnote_open(tokens, idx, env, slf, kinds)
   md.renderer.rules.footnote_close = (tokens, idx) => render_footnote_close(tokens, idx)
   md.renderer.rules.footnote_anchor = (tokens, idx, _options, env) => render_footnote_anchor(tokens, idx, env, getDocIdPart, formatRefSuffix, duplicateMessageHtml, kinds)
